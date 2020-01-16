@@ -1,5 +1,7 @@
 import UserResolvers from './userResolvers'
+import RoleResolvers from './roleResolvers'
 
 export default [
-  UserResolvers
+  UserResolvers,
+  RoleResolvers
 ]

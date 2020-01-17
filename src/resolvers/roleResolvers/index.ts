@@ -1,11 +1,29 @@
-import { Mutation, Resolver, Args } from "type-graphql"
+import { Mutation, Resolver, Args, Query } from "type-graphql"
 import { Role, roleModel } from "../../models/role"
 import { ApolloError } from "apollo-server-express"
 import createRoleInterface from './interfaces/createRoleInterface'
-import deleteOneInterface from '../globalInterfaces/deleteOneInterface'
+import byIdInterface from '../globalInterfaces/byIdInterface'
 
 @Resolver(() => Role)
 export default class roleResolvers {
+  @Query(() => Role)
+  async roleById (
+    @Args() { id }: byIdInterface
+  ): Promise<Role> {
+    try {
+      // Get the role
+      const role = await roleModel.findById(id)
+
+      // Return error if not founc
+      if (!role) { throw new Error('Unable to find a role with the provided id') }
+
+      // return the role if found
+      return role
+    } catch (e) {
+      console.log(e)
+      throw new Error(e)
+    }
+  }
 
   @Mutation(() => Role)
   createRole (
@@ -24,7 +42,7 @@ export default class roleResolvers {
 
   @Mutation(() => Boolean)
   async deleteRole (
-    @Args() { id }: deleteOneInterface
+    @Args() { id }: byIdInterface
   ): Promise<boolean> {
     try {
       // Find the role to be deleted
@@ -38,37 +56,6 @@ export default class roleResolvers {
 
       // return true upon successful deleteion
       return true
-    } catch (e) {
-      console.log(e)
-      throw new ApolloError(e)
-    }
-  }
-
-  @Mutation(() => [Role], { nullable: true })
-  async createDefaultRoles (): Promise<Role[] | null> {
-    try {
-      // Check if the adminRole and base role exist
-      let defaultRoles = await roleModel.find({ usedFor: { '$in': ['adminRole', 'baseRole'] } }, { usedFor: 0 })
-
-      // Create the default roles if they dont exist
-      if (!defaultRoles.length) {
-        defaultRoles = await roleModel.create([
-          {
-            name: 'Admin',
-            usedFor: 'adminRole'
-          },
-          {
-            name: 'User',
-            usedFor: 'baseRole'
-          },
-        ])
-
-        // Return the roles
-        return defaultRoles
-      }
-
-      // return null as they exist
-      return null
     } catch (e) {
       console.log(e)
       throw new ApolloError(e)

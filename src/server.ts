@@ -9,6 +9,7 @@ import authChecker from './middlewares/authChecker'
 import { mongoose } from '@typegoose/typegoose'
 import helmet from 'helmet'
 import enforce from 'express-sslify'
+import setup from './utils/setup'
 
 // Get the neccesary env variables
 const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;
@@ -40,7 +41,10 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;
       useCreateIndex: true
     })
 
-    // Create apollo server
+    // Once connection was stablished procced to run the setup
+    await setup()
+
+    // Create apollo server once setup has completed
     const server = new ApolloServer({
       context: ({ req, res }) => {
         return { req, res }

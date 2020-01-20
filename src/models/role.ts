@@ -26,7 +26,6 @@ export class Role {
   description: string
 
   @prop({ required: false, enum: [undefined, 'adminRole', 'baseRole'] })
-  @Field({ nullable: true })
   usedFor: string
 }
 

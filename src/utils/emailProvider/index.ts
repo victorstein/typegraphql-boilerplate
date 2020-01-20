@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer')
-import templates from '../emailTemplates'
+import templates from './emailTemplates'
 import { cyan } from 'chalk'
 
 // Import the email templates

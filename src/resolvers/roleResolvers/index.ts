@@ -20,7 +20,6 @@ export default class roleResolvers {
       // return the role if found
       return role
     } catch (e) {
-      console.log(e)
       throw new Error(e)
     }
   }
@@ -35,7 +34,6 @@ export default class roleResolvers {
         permissions
       })
     } catch (e) {
-      console.log(e)
       throw new ApolloError(e)
     }
   }
@@ -57,7 +55,6 @@ export default class roleResolvers {
       // return true upon successful deleteion
       return true
     } catch (e) {
-      console.log(e)
       throw new ApolloError(e)
     }
   }

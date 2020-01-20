@@ -1,5 +1,5 @@
 import { ArgsType, Field } from "type-graphql";
-import { nameNotTaken } from "src/utils/customValidators/validators";
+import { nameNotTaken } from "../../../utils/customValidators/validators";
 
 @ArgsType()
 export default class createPermissionInterface {

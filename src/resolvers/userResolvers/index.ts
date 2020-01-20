@@ -103,7 +103,7 @@ export default class userResolvers {
         id: user._id,
         role: user.role,
         permissions: user.permissions,
-        version: user.tokenVersion
+        tokenVersion: user.tokenVersion
       }
 
       // If the account is verified then proceed to create the hashes

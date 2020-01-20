@@ -1,5 +1,5 @@
 import { Resolver, Mutation, Args } from "type-graphql";
-import { Permission, permissionModel } from "src/models/permission";
+import { Permission, permissionModel } from "../../models/permission";
 import createPermissionInterface from "./interfaces/createPermissionInterface";
 
 @Resolver(() => Permission)

@@ -47,6 +47,11 @@ const authChecker:AuthChecker<any> = async ({ context }, permissions): Promise<b
       }      
     }
 
+    // Once permission were verified proceed to check token version
+    if (user.tokenVersion !== payload.tokenVersion) {
+      throw new Error('Invalid token')
+    }
+
     // Add the user to context
     context.user = user
     context.permissions = userPermissions

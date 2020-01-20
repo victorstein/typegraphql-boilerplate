@@ -7,16 +7,17 @@ const { welcomeEmail } = templates
 
 const {
   EMAIL_PROVIDER_HOST,
-  EMAIL_PROVIDER_PORT,
   EMAIL_PROVIDER_USER,
   EMAIL_PROVIDER_PASS,
+  EMAIL_PROVIDER_TLS_PORT,
+  EMAIL_PROVIDER_SSL_PORT,
   DOMAIN,
   NODE_ENV
 } = process.env
 
 const emailTransport = {
   host: EMAIL_PROVIDER_HOST,
-  port: EMAIL_PROVIDER_PORT,
+  port: NODE_ENV === 'production' ? EMAIL_PROVIDER_SSL_PORT : EMAIL_PROVIDER_TLS_PORT,
   auth: {
     user: EMAIL_PROVIDER_USER,
     pass: EMAIL_PROVIDER_PASS

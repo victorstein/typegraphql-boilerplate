@@ -1,10 +1,14 @@
 import { ObjectType } from "type-graphql";
-import { prop, modelOptions, getModelForClass, Ref, arrayProp, pre } from '@typegoose/typegoose'
+import { prop, modelOptions, getModelForClass, Ref, arrayProp, pre, post } from '@typegoose/typegoose'
 import { Field, ID } from 'type-graphql'
 import { Role, roleModel } from "./role";
 import { Permission } from "./permission";
 import bcrypt from 'bcryptjs'
 import mongoose from "mongoose";
+import EmailProvider from "../utils/emailProvider";
+import jwt from 'jsonwebtoken'
+
+const { GLOBAL_SECRET, EMAIL_VERIFICATION_EXPIRY } = process.env
 
 @pre<User>('save', async function (next): Promise<void> {
   // Hash the password before saving
@@ -25,6 +29,33 @@ import mongoose from "mongoose";
   }
 
   next()
+})
+
+@post<User>('save', async function ({ _id, firstName, lastName, email }, next) {
+  try {
+    // Create a hash to auth the user
+    const hash = jwt.sign({ id: _id }, GLOBAL_SECRET!, { expiresIn: EMAIL_VERIFICATION_EXPIRY })
+
+    // Once the new user is created proceed to send welcome email
+    const emailProvider = new EmailProvider({
+      to: email,
+      subject: 'Verify your account',
+      template: "welcome_email",
+      data: {
+        firstName: firstName,
+        lastName: lastName,
+        hash
+      }
+    })
+
+    // Send the email
+    await emailProvider.sendEmail()
+
+    next!()
+  } catch(e) {
+    console.log(e)
+    throw new Error(e)
+  }
 })
 
 @ObjectType()

@@ -60,6 +60,8 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;
         if (err.message.toLowerCase().includes('argument validation error')) {
           const error = err.extensions!.exception.validationErrors.map((u: any) => u.constraints)
           err.message = error.map((u : any) => Object.values(u))
+        } else if (err.message.toLowerCase().includes('invalid signature')) {
+          err.message = 'Invalid request'
         }
         console.log(red(err.message))
         return err

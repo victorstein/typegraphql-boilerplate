@@ -9,12 +9,16 @@ import jwt from 'jsonwebtoken'
 import { permissionModel, Permission } from "../../models/permission";
 import { roleModel, Role } from "../../models/role";
 import { createUser } from "../../utils/reusableSnippets";
+import passwordResetInterface from "./interfaces/passwordResetInterface";
+import requestPasswordResetInterface from "./interfaces/requestPasswordResetInterface";
+import EmailProvider from "../../utils/emailProvider";
 
 const {
   TOKEN_SECRET,
   REFRESH_TOKEN_SECRET,
   TOKEN_SECRET_EXPIRATION,
-  REFRESH_TOKEN_SECRET_EXPIRATION
+  REFRESH_TOKEN_SECRET_EXPIRATION,
+  PASSWORD_RESET_REQUEST_EXPIRY
 } = process.env
 
 @Resolver(() => User)
@@ -148,6 +152,72 @@ export default class userResolvers {
   ): User {
     // Return the user collected from the context
     return user
+  }
+
+  @Mutation(() => Boolean)
+  async passwordReset (
+    @Args() { password, confirmPassword, hash }: passwordResetInterface
+  ): Promise<boolean> {
+    try {
+      // Check if passwords match
+      if (password !== confirmPassword) { throw new Error('Passwords provided do not match') }
+
+      // retreive the id of the requester from the hash
+      const { id }: any = jwt.verify(hash, process.env.GLOBAL_SECRET!)
+
+      // If no id then return error
+      if (!id) { throw new Error('Invalid request') }
+
+      // Retreive the user using the id
+      const user = await userModel.findById(id)
+
+      // If user not found return error
+      if (!user) { throw new Error('Invalid request') }
+
+      // If user found proceed to hash the new password
+      const hashedPassword = await bcrypt.hash(password, 12)
+
+      // Set the new password to the user
+      user.set({ password: hashedPassword, tokenVersion: user.tokenVersion++ })
+
+      // save the new password to the user
+      await user.save()
+      
+      return true
+    } catch (e) {
+      console.log(e)
+      throw new ApolloError(e)
+    }
+  }
+
+  @Query(() => Boolean)
+  async requestPasswordReset (
+    @Args() { email }: requestPasswordResetInterface
+  ): Promise<Boolean> {
+    // locate the user within the database
+    const user = await userModel.findOne({ email })
+
+    // If no user end operations and return true
+    if (!user) { return true }
+
+    // Create a hash that will ensure the user is requesting a pw reset
+    const hash = jwt.sign({ id: user._id }, process.env.TOKEN_SECRET!, {
+      expiresIn: PASSWORD_RESET_REQUEST_EXPIRY
+    })
+
+    // Setup email constructor
+    const emailProvider = new EmailProvider({
+      template: 'reset_password',
+      subject: 'Password Recovery',
+      to: email,
+      data: { hash, firstName: user.firstName, lastName: user.lastName }
+    })
+
+    // Send Email to validate account
+    await emailProvider.sendEmail()
+
+    // Return true no matter the outcome
+    return true
   }
 
   @FieldResolver(() => String)

@@ -249,7 +249,7 @@ export default class userResolvers {
     // Create a hash that will ensure the user is requesting a pw reset
     const hash = jwt.sign({
       id: user._id,
-      version: user.passwwordRecoveryVersion
+      version: user.passwordRecoveryVersion
     }, GLOBAL_SECRET!, { expiresIn: PASSWORD_RESET_REQUEST_EXPIRY })
 
     // Setup email constructor

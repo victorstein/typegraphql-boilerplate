@@ -58,9 +58,6 @@ const authChecker:AuthChecker<any> = async ({ context }, permissions): Promise<b
     return true
   } catch (e) {
     console.log(e.message)
-    if (e.message.includes('invalid signature')) {
-      throw new AuthenticationError('Insufficient permissions to perform this action')
-    }
     throw new AuthenticationError(e)
   }
 }

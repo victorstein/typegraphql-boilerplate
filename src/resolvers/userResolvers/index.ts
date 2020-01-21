@@ -18,7 +18,9 @@ const {
   REFRESH_TOKEN_SECRET,
   TOKEN_SECRET_EXPIRATION,
   REFRESH_TOKEN_SECRET_EXPIRATION,
-  PASSWORD_RESET_REQUEST_EXPIRY
+  PASSWORD_RESET_REQUEST_EXPIRY,
+  EMAIL_VERIFICATION_EXPIRY,
+  GLOBAL_SECRET
 } = process.env
 
 @Resolver(() => User)
@@ -154,6 +156,41 @@ export default class userResolvers {
     return user
   }
 
+  @Query(() => Boolean)
+  async emailVerification(
+    @Arg('hash', { nullable: false }) hash: string
+  ): Promise<Boolean> {
+    try {
+      // Decrypt the hash
+      const payload:any = jwt.verify(hash, GLOBAL_SECRET!)
+
+      // If no user in the payload return false
+      if (!payload.id) { throw new Error('Invalid payload') }
+
+      // Get the id from the payload and locate user
+      let user = await userModel.findById(payload.id)
+
+      // If no user return error
+      if (!user) { throw new Error('The link is invalid or may have expired') }
+
+      if (user.verified) {
+        throw new Error('The user has already been verified')
+      }
+
+      // If the user was found update the verified param
+      user.set({ verified: true })
+
+      // save the data
+      await user.save()
+
+      // return true for successful operation
+      return true
+    } catch (e) {
+      console.log(e)
+      throw new ApolloError(e)
+    }
+  }
+
   @Mutation(() => Boolean)
   async passwordReset (
     @Args() { password, confirmPassword, hash }: passwordResetInterface
@@ -163,10 +200,10 @@ export default class userResolvers {
       if (password !== confirmPassword) { throw new Error('Passwords provided do not match') }
 
       // retreive the id of the requester from the hash
-      const { id }: any = jwt.verify(hash, process.env.GLOBAL_SECRET!)
+      const { id, version }: any = jwt.verify(hash, GLOBAL_SECRET!)
 
       // If no id then return error
-      if (!id) { throw new Error('Invalid request') }
+      if (!id) { throw new Error('The reset password link provided has been used or it has expired') }
 
       // Retreive the user using the id
       const user = await userModel.findById(id)
@@ -174,15 +211,24 @@ export default class userResolvers {
       // If user not found return error
       if (!user) { throw new Error('Invalid request') }
 
+      // If the versions dont match return error
+      if (version !== user.passwordRecoveryVersion) {
+        throw new Error('The reset password link provided has been used or it has expired')
+      }
+
       // If user found proceed to hash the new password
       const hashedPassword = await bcrypt.hash(password, 12)
 
       // Set the new password to the user
-      user.set({ password: hashedPassword, tokenVersion: user.tokenVersion++ })
+      user.set({
+        password: hashedPassword,
+        tokenVersion: user.tokenVersion + 1,
+        passwordRecoveryVersion: user.passwordRecoveryVersion + 1
+      })
 
-      // save the new password to the user
+      // save the data
       await user.save()
-      
+
       return true
     } catch (e) {
       console.log(e)
@@ -201,9 +247,10 @@ export default class userResolvers {
     if (!user) { return true }
 
     // Create a hash that will ensure the user is requesting a pw reset
-    const hash = jwt.sign({ id: user._id }, process.env.TOKEN_SECRET!, {
-      expiresIn: PASSWORD_RESET_REQUEST_EXPIRY
-    })
+    const hash = jwt.sign({
+      id: user._id,
+      version: user.passwwordRecoveryVersion
+    }, GLOBAL_SECRET!, { expiresIn: PASSWORD_RESET_REQUEST_EXPIRY })
 
     // Setup email constructor
     const emailProvider = new EmailProvider({
@@ -218,6 +265,45 @@ export default class userResolvers {
 
     // Return true no matter the outcome
     return true
+  }
+
+  @Mutation(() => Boolean)
+  async resendVerificationEmail (
+    @Args() { email }: requestPasswordResetInterface
+  ): Promise<Boolean> {
+    try {
+      // Look for the user using the email
+      const user = await userModel.findOne({ email })
+
+      // Return error if no user
+      if (!user) { throw new Error('The provided email is invalid') }
+
+      // If the user was found check if is not verified
+      if (user.verified) { throw new Error('User is already verified') }
+
+      // Use jsonwebtoken to create a unique hash with the user info
+      const hash = jwt.sign({ id: user._id }, GLOBAL_SECRET!, { expiresIn: EMAIL_VERIFICATION_EXPIRY })
+
+      // Setup email constructor
+      const emailProvider = new EmailProvider({
+        to: email,
+        subject: 'Verify your account',
+        template: "welcome_email",
+        data: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          hash
+        }
+      })
+
+      // Send Email to validate account
+      await emailProvider.sendEmail()
+
+      return true
+    } catch (e) {
+      console.log(e)
+      throw new ApolloError(e)
+    }
   }
 
   @FieldResolver(() => String)

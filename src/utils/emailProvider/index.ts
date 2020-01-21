@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer')
 import templates from './emailTemplates'
 import { cyan } from 'chalk'
+import { legibleTime } from '../reusableSnippets'
 
 // Import the email templates
 const { welcomeEmail, passwordReset } = templates
@@ -12,7 +13,9 @@ const {
   EMAIL_PROVIDER_TLS_PORT,
   EMAIL_PROVIDER_SSL_PORT,
   DOMAIN,
-  NODE_ENV
+  NODE_ENV,
+  EMAIL_VERIFICATION_EXPIRY,
+  PASSWORD_RESET_REQUEST_EXPIRY
 } = process.env
 
 const emailTransport = {
@@ -57,13 +60,15 @@ export default class EmailProvider {
         return welcomeEmail({
           firstName: this.data.firstName,
           lastName: this.data.lastName,
-          hash: this.data.hash
+          hash: this.data.hash,
+          expiry: legibleTime(EMAIL_VERIFICATION_EXPIRY!)
         })
       case 'reset_password':
         return passwordReset({
           firstName: this.data.firstName,
           lastName: this.data.lastName,
-          hash: this.data.hash
+          hash: this.data.hash,
+          expiry: legibleTime(PASSWORD_RESET_REQUEST_EXPIRY!)
         })
       default:
         throw new Error('Invalid email template')

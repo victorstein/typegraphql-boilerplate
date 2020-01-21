@@ -1,29 +1,16 @@
-const { PORT, DOMAIN, NODE_ENV, PASSWORD_RESET_REQUEST_EXPIRY } = process.env
-
-const legibleTime = (time: string) => {
-  switch (true) {
-    case time.includes('h'):
-      return time.replace('h', ' hour(s)')
-    case time.includes('w'):
-      return time.replace('w', ' week(s)')
-    case time.includes('d'):
-      return time.replace('d', ' day(s)')
-    default:
-      return time
-  }
-}
+const { PORT, DOMAIN, NODE_ENV } = process.env
 
 const PREFIX = NODE_ENV === 'production' ? 'https://' : 'http://'
 const SHOW_PORT = NODE_ENV === 'production' ? '' : `:${PORT}`
-const EXPIRY = legibleTime(PASSWORD_RESET_REQUEST_EXPIRY!)
 
 interface welcomeEmail {
   firstName: string
   lastName: string
-  hash: string
+  hash: string,
+  expiry: string
 }
 
-export default ({ firstName, lastName, hash }: welcomeEmail) => (
+export default ({ firstName, lastName, hash, expiry }: welcomeEmail) => (
   `
 <html>
   <head>
@@ -359,7 +346,7 @@ export default ({ firstName, lastName, hash }: welcomeEmail) => (
     </style>
   </head>
   <body class="">
-    <span class="preheader">This is preheader text. Some clients will show this text as a preview.</span>
+    <span class="preheader">Password recovery</span>
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
       <tr>
         <td>&nbsp;</td>
@@ -376,7 +363,7 @@ export default ({ firstName, lastName, hash }: welcomeEmail) => (
                     <tr>
                       <td>
                         <p>Hi ${firstName} ${lastName},</p>
-                        <p>We have received a password reset request. Follow the link below to reset your password. (the link below will be valid for ${EXPIRY})</p>
+                        <p>We have received a password reset request. Follow the link below to reset your password. (the link below will be valid for ${expiry})</p>
                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
                           <tbody>
                             <tr>

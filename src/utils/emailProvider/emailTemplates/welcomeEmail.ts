@@ -6,10 +6,11 @@ const SHOW_PORT = NODE_ENV === 'production' ? '' : `:${PORT}`
 interface welcomeEmail {
   firstName: string
   lastName: string
-  hash: string
+  hash: string,
+  expiry: string
 }
 
-export default ({ firstName, lastName, hash }: welcomeEmail) => (
+export default ({ firstName, lastName, hash, expiry }: welcomeEmail) => (
   `
 <html>
   <head>
@@ -345,7 +346,7 @@ export default ({ firstName, lastName, hash }: welcomeEmail) => (
     </style>
   </head>
   <body class="">
-    <span class="preheader">This is preheader text. Some clients will show this text as a preview.</span>
+    <span class="preheader">Welcome!</span>
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
       <tr>
         <td>&nbsp;</td>
@@ -362,7 +363,7 @@ export default ({ firstName, lastName, hash }: welcomeEmail) => (
                     <tr>
                       <td>
                         <p>Hi ${firstName} ${lastName},</p>
-                        <p>Your registration completed successfully! click the link below to verify your account.</p>
+                        <p>Your registration completed successfully! click the link below to verify your account. (the link below will be valid for ${expiry})</p>
                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
                           <tbody>
                             <tr>

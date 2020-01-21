@@ -38,3 +38,16 @@ export const createUser = (
     }
   })
 }
+
+export const legibleTime = (time: string) => {
+  switch (true) {
+    case time.includes('h'):
+      return time.replace('h', ' hour(s)')
+    case time.includes('w'):
+      return time.replace('w', ' week(s)')
+    case time.includes('d'):
+      return time.replace('d', ' day(s)')
+    default:
+      return time
+  }
+}

@@ -57,10 +57,11 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;
       schema,
       debug: NODE_ENV !== 'production',
       formatError: (err) => {
-        if (err.message.toLowerCase().includes('argument validation error')) {
+        const message = err.message.toLowerCase()
+        if (message.includes('argument validation error')) {
           const error = err.extensions!.exception.validationErrors.map((u: any) => u.constraints)
           err.message = error.map((u : any) => Object.values(u))
-        } else if (err.message.toLowerCase().includes('invalid signature')) {
+        } else if (message.includes('invalid signature') || message.includes('invalid token')) {
           err.message = 'Invalid request'
         }
         console.log(red(err.message))

@@ -3,7 +3,7 @@ import templates from './emailTemplates'
 import { cyan } from 'chalk'
 
 // Import the email templates
-const { welcomeEmail } = templates
+const { welcomeEmail, passwordReset } = templates
 
 const {
   EMAIL_PROVIDER_HOST,
@@ -26,14 +26,14 @@ const emailTransport = {
 
 interface emailProvider {
   to: string
-  template: 'welcome_email' | ''
+  template: 'welcome_email' | 'reset_password'
   subject: string
   data?: any
 }
 
 export default class EmailProvider {
   to: string
-  template: 'welcome_email' | ''
+  template: 'welcome_email' | 'reset_password'
   subject: string
   data?: any
   transporter: any
@@ -55,6 +55,12 @@ export default class EmailProvider {
     switch (template) {
       case 'welcome_email':
         return welcomeEmail({
+          firstName: this.data.firstName,
+          lastName: this.data.lastName,
+          hash: this.data.hash
+        })
+      case 'reset_password':
+        return passwordReset({
           firstName: this.data.firstName,
           lastName: this.data.lastName,
           hash: this.data.hash

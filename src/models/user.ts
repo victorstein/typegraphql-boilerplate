@@ -1,5 +1,5 @@
 import { ObjectType } from "type-graphql";
-import { prop, modelOptions, getModelForClass, Ref, arrayProp, pre, post } from '@typegoose/typegoose'
+import { prop, modelOptions, getModelForClass, Ref, arrayProp, pre, post, plugin } from '@typegoose/typegoose'
 import { Field, ID } from 'type-graphql'
 import { Role, roleModel } from "./role";
 import { Permission } from "./permission";
@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs'
 import mongoose from "mongoose";
 import EmailProvider from "../utils/emailProvider";
 import jwt from 'jsonwebtoken'
+import paginate from '../utils/reusableSnippets/pagination'
 
 const { GLOBAL_SECRET, EMAIL_VERIFICATION_EXPIRY } = process.env
 
@@ -67,6 +68,7 @@ const { GLOBAL_SECRET, EMAIL_VERIFICATION_EXPIRY } = process.env
 
 @ObjectType()
 @modelOptions({ schemaOptions: { timestamps: true } })
+@plugin(paginate)
 export class User {
   @Field(() => ID)
   id: string

@@ -1,13 +1,32 @@
-import { Resolver, Mutation, Args } from "type-graphql";
+import { Resolver, Mutation, Args, registerEnumType } from "type-graphql";
 import { Permission, permissionModel } from "../../models/permission";
 import createPermissionInterface from "./interfaces/createPermissionInterface";
 import baseCRUDResolver from "../globalResolvers/crudBaseResolver"
 
+const ResolverName = 'permission'
+
+// Register filter criterias
+enum FilterType {
+  NAME = "name",
+  DESCRIPTION = "description"
+}
+
+console.log(permissionModel.schema.indexes())
+
+// Initialize base CRUD factory
 const CRUDPermission = baseCRUDResolver(
-  'permission',
+  ResolverName,
   Permission,
-  permissionModel
+  permissionModel,
+  FilterType,
+  {
+    findById: [],
+    readAll: [],
+    deleteById: []
+  }
 )
+
+registerEnumType(FilterType, { name: `${ResolverName}Type` })
 
 @Resolver(() => Permission)
 export default class permissionResolvers extends CRUDPermission {

@@ -85,7 +85,9 @@ export default class userResolvers {
       // If the account is verified then proceed to create the hashes
       const token = jwt.sign(payload, TOKEN_SECRET!, { expiresIn: TOKEN_SECRET_EXPIRATION! })
       const refreshToken = jwt.sign(payload, REFRESH_TOKEN_SECRET!, { expiresIn: REFRESH_TOKEN_SECRET_EXPIRATION! })
-      const refreshTokenData: any = jwt.verify(token, TOKEN_SECRET!)
+
+      // Create token refresh expiration data
+      const refreshTokenData: any = jwt.verify(refreshToken, REFRESH_TOKEN_SECRET!)
       const refreshTokenExpiration = { createdAt: refreshTokenData.iat, expiresAt: refreshTokenData.exp }
 
       return { token, refreshToken, refreshTokenExpiration }

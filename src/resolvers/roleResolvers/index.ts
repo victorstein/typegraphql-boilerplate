@@ -2,7 +2,7 @@ import { Mutation, Resolver, Args, Query } from "type-graphql"
 import { Role, roleModel } from "../../models/role"
 import { ApolloError } from "apollo-server-express"
 import createRoleInterface from './interfaces/createRoleInterface'
-import byIdInterface from '../globalInterfaces/byIdInterface'
+import byIdInterface from '../globalInterfaces/input/byIdInterface'
 
 @Resolver(() => Role)
 export default class roleResolvers {

@@ -51,3 +51,10 @@ export const legibleTime = (time: string) => {
       return time
   }
 }
+
+export const createFilters = (model: any) => {
+  return model.schema.indexes().reduce((x: any, u: any) => {
+    x[Object.keys(u[0])[0].toUpperCase()] = Object.keys(u[0])[0]
+    return x
+  }, {})
+}

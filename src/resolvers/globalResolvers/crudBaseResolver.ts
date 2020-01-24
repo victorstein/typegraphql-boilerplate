@@ -1,27 +1,34 @@
-import { ClassType, Resolver, Query, Args, Mutation, ObjectType, Field, ArgsType, InputType, registerEnumType } from "type-graphql";
-import byIdInterface from "../globalInterfaces/byIdInterface";
+import { ClassType, Resolver, Query, Args, Mutation, ObjectType, Field, Authorized, InputType, EnumResolver, ArgsType } from "type-graphql";
+import byIdInterface from "../globalInterfaces/input/byIdInterface";
 import { ApolloError } from "apollo-server-express";
-import { IsOptional, Min, Max } from "class-validator";
 import { intOrStringScalar } from "../../utils/reusableSnippets/customScalars";
+import { IsOptional, Min, Max } from "class-validator";
+
+interface permissionType {
+  findById: string[],
+  readAll: string[],
+  deleteById: string[]
+}
 
 function createCRUDResolver<T extends ClassType>(
   prefix: string,
   returnType: T,
-  model: any
+  model: any,
+  allowedSearchCriterias: EnumResolver,
+  permissions: permissionType,
 ) {
-
-  enum FilterType {
-    NAME = "name",
-    DESCRIPTION = "description"
-  }
-
-  registerEnumType(FilterType, { name: "FilterType" })
+  // Get all the permissions
+  const {
+    findById = [],
+    readAll = [],
+    deleteById = []
+  } = permissions
 
   @InputType()
   class Filter {
-    @Field(() => FilterType, { nullable: false })
-    field: FilterType
-
+    @Field(() => allowedSearchCriterias, { nullable: false })
+    field: EnumResolver
+  
     @Field(() => intOrStringScalar, { nullable: false })
     value: string | number
   }
@@ -45,16 +52,16 @@ function createCRUDResolver<T extends ClassType>(
   class paginationOutput {
     @Field(() => [returnType])
     docs: any[]
-
+  
     @Field()
     total: number
-
+  
     @Field()
     perPage: number
-
+  
     @Field()
     page: number
-
+  
     @Field()
     pages: number
   }
@@ -63,6 +70,7 @@ function createCRUDResolver<T extends ClassType>(
   abstract class CRUDBaseResolver {
 
     @Query(() => returnType, { name: `${prefix}ById` })
+    @Authorized(findById)
     async findById(@Args() { id }: byIdInterface ): Promise<T[]> {
       try {
         // Get the role
@@ -79,6 +87,7 @@ function createCRUDResolver<T extends ClassType>(
     }
 
     @Query(() => paginationOutput, { name: `${prefix}s`, nullable: true })
+    @Authorized(readAll)
     readAll (
       @Args() { perPage, page, filters }: paginationInterface
     ): paginationOutput {
@@ -91,6 +100,7 @@ function createCRUDResolver<T extends ClassType>(
     }
 
     @Mutation(() => Boolean)
+    @Authorized(deleteById)
     async deleteById (
       @Args() { id }: byIdInterface
     ): Promise<boolean> {

@@ -1,37 +1,36 @@
-import { Resolver, Mutation, Args, registerEnumType } from "type-graphql";
+import { Resolver, Mutation, Args, registerEnumType, Authorized } from "type-graphql";
 import { Permission, permissionModel } from "../../models/permission";
 import createPermissionInterface from "./interfaces/createPermissionInterface";
 import baseCRUDResolver from "../globalResolvers/crudBaseResolver"
+import { createFilters } from "../../utils/reusableSnippets";
 
+// Define the prefix of the resolvers
 const ResolverName = 'permission'
 
-// Register filter criterias
-enum FilterType {
-  NAME = "name",
-  DESCRIPTION = "description"
-}
-
-console.log(permissionModel.schema.indexes())
+// Create an enum based on the model indexes
+const modelIndexes = createFilters(permissionModel)
 
 // Initialize base CRUD factory
-const CRUDPermission = baseCRUDResolver(
-  ResolverName,
-  Permission,
-  permissionModel,
-  FilterType,
-  {
-    findById: [],
-    readAll: [],
-    deleteById: []
+const CRUDPermission = baseCRUDResolver({
+  prefix: ResolverName,
+  returnType: Permission,
+  model: permissionModel,
+  allowedSearchCriterias: modelIndexes,
+  permissions: {
+    findById: ['readAllPermissions', 'readPermissions'],
+    readAll: ['readAllPermissions', 'readPermissions'],
+    deleteById: ['deletePermission']
   }
-)
+})
 
-registerEnumType(FilterType, { name: `${ResolverName}Type` })
+// Register the enum type with graphql
+registerEnumType(modelIndexes, { name: `${ResolverName}Type` })
 
 @Resolver(() => Permission)
 export default class permissionResolvers extends CRUDPermission {
 
   @Mutation(() => Permission)
+  @Authorized(['createPermissions'])
   async createPermission (
     @Args() { name, description }: createPermissionInterface
   ) {
@@ -40,6 +39,5 @@ export default class permissionResolvers extends CRUDPermission {
       description
     })
   }
-
   
 }

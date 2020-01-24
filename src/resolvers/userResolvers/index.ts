@@ -12,7 +12,7 @@ import { createUser } from "../../utils/reusableSnippets";
 import passwordResetInterface from "./interfaces/passwordResetInterface";
 import requestPasswordResetInterface from "./interfaces/requestPasswordResetInterface";
 import EmailProvider from "../../utils/emailProvider";
-import byIdInterface from "../globalInterfaces/byIdInterface";
+import byIdInterface from "../globalInterfaces/input/byIdInterface";
 
 const {
   TOKEN_SECRET,
@@ -85,8 +85,10 @@ export default class userResolvers {
       // If the account is verified then proceed to create the hashes
       const token = jwt.sign(payload, TOKEN_SECRET!, { expiresIn: TOKEN_SECRET_EXPIRATION! })
       const refreshToken = jwt.sign(payload, REFRESH_TOKEN_SECRET!, { expiresIn: REFRESH_TOKEN_SECRET_EXPIRATION! })
+      const refreshTokenData: any = jwt.verify(token, TOKEN_SECRET!)
+      const refreshTokenExpiration = { createdAt: refreshTokenData.iat, expiresAt: refreshTokenData.exp }
 
-      return { token, refreshToken }
+      return { token, refreshToken, refreshTokenExpiration }
     } catch (e) {
       throw new AuthenticationError(e)
     }

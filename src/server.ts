@@ -13,7 +13,7 @@ import setup from './utils/setup'
 import { cyan, red } from 'chalk'
 
 // Clear the console
-console.clear()
+// console.clear()
 
 // Get the neccesary env variables
 const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;

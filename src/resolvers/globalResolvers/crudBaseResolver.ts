@@ -10,13 +10,22 @@ interface permissionType {
   deleteById: string[]
 }
 
-function createCRUDResolver<T extends ClassType>(
-  prefix: string,
-  returnType: T,
-  model: any,
-  allowedSearchCriterias: EnumResolver,
-  permissions: permissionType,
-) {
+interface createCRUD {
+  prefix: string
+  returnType: any
+  model: any
+  allowedSearchCriterias: EnumResolver
+  permissions: permissionType
+}
+
+function createCRUDResolver<T extends ClassType>({
+  prefix,
+  returnType,
+  model,
+  allowedSearchCriterias,
+  permissions
+}: createCRUD) {
+
   // Get all the permissions
   const {
     findById = [],
@@ -24,6 +33,7 @@ function createCRUDResolver<T extends ClassType>(
     deleteById = []
   } = permissions
 
+  // Dynamic filter
   @InputType()
   class Filter {
     @Field(() => allowedSearchCriterias, { nullable: false })
@@ -33,6 +43,7 @@ function createCRUDResolver<T extends ClassType>(
     value: string | number
   }
 
+  // Dynamic pagination
   @ArgsType()
   class paginationInterface {
     @Field({ nullable: true, defaultValue: 10 })
@@ -48,6 +59,7 @@ function createCRUDResolver<T extends ClassType>(
     filters: Filter[]
   }
 
+  // Dynamic output
   @ObjectType()
   class paginationOutput {
     @Field(() => [returnType])

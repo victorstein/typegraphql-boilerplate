@@ -12,6 +12,7 @@ import { createUser } from "../../utils/reusableSnippets";
 import passwordResetInterface from "./interfaces/passwordResetInterface";
 import requestPasswordResetInterface from "./interfaces/requestPasswordResetInterface";
 import EmailProvider from "../../utils/emailProvider";
+import byIdInterface from "../globalInterfaces/byIdInterface";
 
 const {
   TOKEN_SECRET,
@@ -25,46 +26,29 @@ const {
 
 @Resolver(() => User)
 export default class userResolvers {
-
-  @Mutation(() => User)
-  @Authorized('createUsers')
-  createUser(
-    @Args() { email, password, confirmPassword, firstName, lastName }: createUserInterface
-  ): Promise<User> {
-    try {
-      return createUser({ email, password, confirmPassword, firstName, lastName })
-    } catch (e) {
-      throw new ApolloError(e)
-    }
+  
+  @Query(() => User)
+  @Authorized()
+  me (
+    @Ctx() { user }: any
+  ): User {
+    // Return the user collected from the context
+    return user
   }
 
-  @Mutation(() => User)
-  async signUp(
-    @Args() { email, password, confirmPassword, firstName, lastName }: createUserInterface
+  @Query(() => User)
+  @Authorized('readUsers')
+  async userById(
+    @Args() { id }: byIdInterface
   ): Promise<User> {
     try {
-      // Check if the admin role was already created
-      if (await userModel.estimatedDocumentCount() === 0) {
-        throw new Error('Unable to process your request')
-      }
+      // Find the user in the DB
+      const user = await userModel.findById(id)
 
-      return createUser({ email, password, confirmPassword, firstName, lastName })
-    } catch (e) {
-      throw new ApolloError(e)
-    }
-  }
+      // If no user then return error
+      if (!user) { throw new Error('Unable to find the requested user') }
 
-  @Mutation(() => User)
-  async createAdmin (
-    @Args() { email, password, confirmPassword, firstName, lastName }: createUserInterface
-  ): Promise<User> {
-    try {
-      // Check if the admin role was already created
-      if (await userModel.estimatedDocumentCount() > 0) {
-        throw new Error('Unable to process your request')
-      }
-
-      return createUser({ email, password, confirmPassword, firstName, lastName })
+      return user
     } catch (e) {
       throw new ApolloError(e)
     }
@@ -147,15 +131,6 @@ export default class userResolvers {
     }
   }
 
-  @Query(() => User)
-  @Authorized()
-  me (
-    @Ctx() { user }: any
-  ): User {
-    // Return the user collected from the context
-    return user
-  }
-
   @Query(() => Boolean)
   async emailVerification(
     @Arg('hash', { nullable: false }) hash: string
@@ -187,6 +162,81 @@ export default class userResolvers {
       return true
     } catch (e) {
       console.log(e)
+      throw new ApolloError(e)
+    }
+  }
+
+  @Query(() => Boolean)
+  async requestPasswordReset (
+    @Args() { email }: requestPasswordResetInterface
+  ): Promise<Boolean> {
+    // locate the user within the database
+    const user = await userModel.findOne({ email })
+
+    // If no user end operations and return true
+    if (!user) { return true }
+
+    // Create a hash that will ensure the user is requesting a pw reset
+    const hash = jwt.sign({
+      id: user._id,
+      version: user.passwordRecoveryVersion
+    }, GLOBAL_SECRET!, { expiresIn: PASSWORD_RESET_REQUEST_EXPIRY })
+
+    // Setup email constructor
+    const emailProvider = new EmailProvider({
+      template: 'reset_password',
+      subject: 'Password Recovery',
+      to: email,
+      data: { hash, firstName: user.firstName, lastName: user.lastName }
+    })
+
+    // Send Email to validate account
+    await emailProvider.sendEmail()
+
+    // Return true no matter the outcome
+    return true
+  }
+
+  @Mutation(() => User)
+  @Authorized('createUsers')
+  createUser(
+    @Args() { email, password, confirmPassword, firstName, lastName }: createUserInterface
+  ): Promise<User> {
+    try {
+      return createUser({ email, password, confirmPassword, firstName, lastName })
+    } catch (e) {
+      throw new ApolloError(e)
+    }
+  }
+
+  @Mutation(() => User)
+  async signUp(
+    @Args() { email, password, confirmPassword, firstName, lastName }: createUserInterface
+  ): Promise<User> {
+    try {
+      // Check if the admin role was already created
+      if (await userModel.estimatedDocumentCount() === 0) {
+        throw new Error('Unable to process your request')
+      }
+
+      return createUser({ email, password, confirmPassword, firstName, lastName })
+    } catch (e) {
+      throw new ApolloError(e)
+    }
+  }
+
+  @Mutation(() => User)
+  async createAdmin (
+    @Args() { email, password, confirmPassword, firstName, lastName }: createUserInterface
+  ): Promise<User> {
+    try {
+      // Check if the admin role was already created
+      if (await userModel.estimatedDocumentCount() > 0) {
+        throw new Error('Unable to process your request')
+      }
+
+      return createUser({ email, password, confirmPassword, firstName, lastName })
+    } catch (e) {
       throw new ApolloError(e)
     }
   }
@@ -234,37 +284,6 @@ export default class userResolvers {
       console.log(e)
       throw new ApolloError(e)
     }
-  }
-
-  @Query(() => Boolean)
-  async requestPasswordReset (
-    @Args() { email }: requestPasswordResetInterface
-  ): Promise<Boolean> {
-    // locate the user within the database
-    const user = await userModel.findOne({ email })
-
-    // If no user end operations and return true
-    if (!user) { return true }
-
-    // Create a hash that will ensure the user is requesting a pw reset
-    const hash = jwt.sign({
-      id: user._id,
-      version: user.passwordRecoveryVersion
-    }, GLOBAL_SECRET!, { expiresIn: PASSWORD_RESET_REQUEST_EXPIRY })
-
-    // Setup email constructor
-    const emailProvider = new EmailProvider({
-      template: 'reset_password',
-      subject: 'Password Recovery',
-      to: email,
-      data: { hash, firstName: user.firstName, lastName: user.lastName }
-    })
-
-    // Send Email to validate account
-    await emailProvider.sendEmail()
-
-    // Return true no matter the outcome
-    return true
   }
 
   @Mutation(() => Boolean)

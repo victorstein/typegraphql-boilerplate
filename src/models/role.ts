@@ -1,5 +1,6 @@
 import { ObjectType, Field, ID } from "type-graphql";
-import { modelOptions, prop, getModelForClass, pre } from "@typegoose/typegoose";
+import { modelOptions, prop, getModelForClass, pre, Ref, plugin } from "@typegoose/typegoose";
+import paginate from '../utils/reusableSnippets/pagination'
 
 // ENSURE THAT WE ARE NOT DELETEING BASE ROLES
 @pre<Role>('remove', function(next) {
@@ -13,6 +14,7 @@ import { modelOptions, prop, getModelForClass, pre } from "@typegoose/typegoose"
 
 @ObjectType()
 @modelOptions({ schemaOptions: { timestamps: true } })
+@plugin(paginate)
 export class Role {
   @Field(() => ID)
   id: string
@@ -27,6 +29,9 @@ export class Role {
 
   @prop({ required: false, enum: [undefined, 'adminRole', 'baseRole'] })
   usedFor: string
+
+  @prop({ required: true })
+  createdBy: Ref<Role>
 }
 
 export const roleModel = getModelForClass(Role)

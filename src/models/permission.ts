@@ -10,14 +10,14 @@ export class Permission {
   @Field(() => ID)
   id: string
 
-  @prop({ required: true })
+  @prop({ required: true, text: true })
   @Field({ nullable: false })
   name: string
 
   @arrayProp({ itemsRef: 'Role' })
   usedByRole: Ref<Role>[]
 
-  @prop({ required: false })
+  @prop({ required: false, text: true })
   @Field({ nullable: true })
   description: string
 }

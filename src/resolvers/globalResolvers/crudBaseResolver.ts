@@ -1,10 +1,11 @@
-import { ClassType, Resolver, Query, Args, Mutation, ObjectType, Field, Authorized, EnumResolver, FieldResolver, Root, Ctx } from "type-graphql";
+import { ClassType, Resolver, Query, Args, Mutation, Authorized, EnumResolver, FieldResolver, Root, Ctx } from "type-graphql";
 import byIdInterface from "../globalInterfaces/input/byIdInterface";
 import { ApolloError } from "apollo-server-express";
 import { userModel, User } from "../../models/user";
 import { capitalize } from "../../utils/reusableSnippets";
 import createDynamicFilterType from "../globalInterfaces/input/filterFactory";
 import createDynamicPaginationInterface from "../globalInterfaces/input/paginationFactory";
+import createPaginationOutput from "../globalInterfaces/output/pagintationOutput";
 
 interface permissionType {
   findById: string[],
@@ -17,6 +18,7 @@ interface createCRUD {
   returnType: any
   model: any
   allowedSearchCriterias: EnumResolver
+  allowedSortCriterias: EnumResolver
   permissions: permissionType
 }
 
@@ -25,10 +27,18 @@ function createCRUDResolver<T extends ClassType>({
   returnType,
   model,
   allowedSearchCriterias,
+  allowedSortCriterias,
   permissions
 }: createCRUD) {
+  console.log(allowedSortCriterias)
   // Lowercase the prefix for consistency
   prefix = prefix.toLowerCase()
+
+  // Lowercase all permissions
+  permissions = Object.entries(permissions).reduce((x: any, u:any) => {
+    x[u[0]] = u[1].map((u: string) => u.toLowerCase())
+    return x
+  }, {})
 
   // Get all the permissions
   const {
@@ -50,24 +60,8 @@ function createCRUDResolver<T extends ClassType>({
   type paginationInterface = InstanceType<typeof paginationInterface>;
 
   // Dynamic output using the return type
-  // TURN THIS INTO A FACTORY YOU LAZY MOFO
-  @ObjectType(`${prefix}PaginationOutput`)
-  class paginationOutput {
-    @Field(() => [returnType], { nullable: true })
-    docs: any[]
-  
-    @Field()
-    total: number
-  
-    @Field()
-    perPage: number
-  
-    @Field()
-    page: number
-  
-    @Field()
-    pages: number
-  }
+  const paginationOutput = createPaginationOutput(prefix, returnType)
+  type paginationOutput = InstanceType<typeof paginationOutput>;
 
   @Resolver(() => returnType, { isAbstract: true })
   abstract class CRUDBaseResolver {
@@ -79,25 +73,20 @@ function createCRUDResolver<T extends ClassType>({
       @Ctx() { permissions, user }: any
     ): Promise<T[]> {
       try {
-        // Get the role
-        const entity = await model.findById(id)
+        const filters: any = { _id: id }
+
+        // Check if the user is allowed to see the entity
+        if (!permissions.includes(`read_all_${prefix}s`)) {
+          filters.createdBy = user._id
+        }
+
+        // Get the data
+        const entity = await model.findOne(filters)
   
         // Return error if not found
         if (!entity) { throw new Error(`Unable to find a ${prefix} with the provided id`) }
 
-        // Check if the user is allowed to see the entity
-        if (permissions.includes(`read_all_${prefix}s`)) {
-          return entity
-        }
-  
-        // If the user is not allowed to see all entities
-        // Check if the user created the entity
-        if (entity.createdBy === user._id) {
-          return entity
-        }
-
-        // return error if no criteria is met
-        throw new Error('Insufficient permissions for this query')
+        return entity
       } catch (e) {
         throw new ApolloError(e)
       }
@@ -106,10 +95,18 @@ function createCRUDResolver<T extends ClassType>({
     @Query(() => paginationOutput, { name: `${prefix}s`, nullable: true })
     @Authorized(readAll)
     readAll (
-      @Args() { perPage, page, filters = {} }: paginationInterface
+      @Args() { perPage, page, filters = {} }: paginationInterface,
+      @Ctx() { permissions, user }: any
     ): paginationOutput {
       try {
-        // Pagiante the model
+        // Check if the user is allowed to see the entity
+        if (!permissions.includes(`read_all_${prefix}s`)) {
+          // Add filtering to the DB request
+          filters.createdBy = { 'createdBy': user._id }
+        }
+
+        // If the user is not allowed to see all entities
+        // Check if the user created the entity
         return model.paginate(filters, { page, perPage })
       } catch (e) {
         throw new ApolloError(e)
@@ -138,15 +135,14 @@ function createCRUDResolver<T extends ClassType>({
       }
     }
 
-    @FieldResolver(() => User)
+    @FieldResolver(() => User, { name: 'createdBy' })
     async createdBy (
       @Root() root: any
     ) {
-      console.log(root)
       return userModel.findById(root.createdBy)
     }
 
-    @FieldResolver(() => User)
+    @FieldResolver(() => User, { name: 'lastUpdatedBy' })
     async lastUpdatedBy (
       @Root() root: any
     ) {

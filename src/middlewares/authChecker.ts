@@ -5,6 +5,8 @@ import 'dotenv/config'
 import { userModel } from "../models/user"
 import { permissionModel } from "../models/permission"
 
+var contextService = require('request-context');
+
 const authChecker:AuthChecker<any> = async ({ context }, permissions): Promise<boolean> => {
   try {
     // Get headers from context
@@ -20,10 +22,13 @@ const authChecker:AuthChecker<any> = async ({ context }, permissions): Promise<b
     const payload:any = jwt.verify(token, process.env.TOKEN_SECRET!)
 
     // Locate the user in the DB
-    const user = await userModel.findById(payload.id)
+    const user = await userModel.findById(payload.id, { password: 0 })
 
     // Return and error if no user found
     if (!user) { throw new Error('Insufficient permissions to perform this action') }
+
+    // Insert the user in the express context
+    contextService.set('req:user', user)
 
     // Stablish default user permissions
     let userPermissions: string[] = []

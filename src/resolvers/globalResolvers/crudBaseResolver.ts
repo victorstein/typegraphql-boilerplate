@@ -1,8 +1,10 @@
-import { ClassType, Resolver, Query, Args, Mutation, ObjectType, Field, Authorized, InputType, EnumResolver, ArgsType } from "type-graphql";
+import { ClassType, Resolver, Query, Args, Mutation, ObjectType, Field, Authorized, EnumResolver, FieldResolver, Root, Ctx } from "type-graphql";
 import byIdInterface from "../globalInterfaces/input/byIdInterface";
 import { ApolloError } from "apollo-server-express";
-import { intOrStringScalar } from "../../utils/reusableSnippets/customScalars";
-import { IsOptional, Min, Max } from "class-validator";
+import { userModel, User } from "../../models/user";
+import { capitalize } from "../../utils/reusableSnippets";
+import createDynamicFilterType from "../globalInterfaces/input/filterFactory";
+import createDynamicPaginationInterface from "../globalInterfaces/input/paginationFactory";
 
 interface permissionType {
   findById: string[],
@@ -25,6 +27,8 @@ function createCRUDResolver<T extends ClassType>({
   allowedSearchCriterias,
   permissions
 }: createCRUD) {
+  // Lowercase the prefix for consistency
+  prefix = prefix.toLowerCase()
 
   // Get all the permissions
   const {
@@ -33,36 +37,23 @@ function createCRUDResolver<T extends ClassType>({
     deleteById = []
   } = permissions
 
-  // Dynamic filter
-  @InputType()
-  class Filter {
-    @Field(() => allowedSearchCriterias, { nullable: false })
-    field: EnumResolver
-  
-    @Field(() => intOrStringScalar, { nullable: false })
-    value: string | number
+  // declare the filter
+  let Filter: ClassType | null = null
+
+  // Create dynamic filter if needed
+  if (Object.keys(allowedSearchCriterias).length) {
+    Filter = createDynamicFilterType(allowedSearchCriterias, prefix)
   }
 
-  // Dynamic pagination
-  @ArgsType()
-  class paginationInterface {
-    @Field({ nullable: true, defaultValue: 10 })
-    @IsOptional()
-    @Min(1, { message: 'The per page param must be between 1 and 25' })
-    @Max(25, { message: 'The per page param must be between 1 and 25' })
-    perPage: number
+  // Create dynamic pagination interface
+  const paginationInterface = createDynamicPaginationInterface(Filter)
+  type paginationInterface = InstanceType<typeof paginationInterface>;
 
-    @Field({ nullable: true, defaultValue: 1 })
-    page: number
-
-    @Field(() => [Filter], { nullable: true })
-    filters: Filter[]
-  }
-
-  // Dynamic output
-  @ObjectType()
+  // Dynamic output using the return type
+  // TURN THIS INTO A FACTORY YOU LAZY MOFO
+  @ObjectType(`${prefix}PaginationOutput`)
   class paginationOutput {
-    @Field(() => [returnType])
+    @Field(() => [returnType], { nullable: true })
     docs: any[]
   
     @Field()
@@ -78,21 +69,35 @@ function createCRUDResolver<T extends ClassType>({
     pages: number
   }
 
-  @Resolver({ isAbstract: true })
+  @Resolver(() => returnType, { isAbstract: true })
   abstract class CRUDBaseResolver {
 
     @Query(() => returnType, { name: `${prefix}ById` })
     @Authorized(findById)
-    async findById(@Args() { id }: byIdInterface ): Promise<T[]> {
+    async findById(
+      @Args() { id }: byIdInterface,
+      @Ctx() { permissions, user }: any
+    ): Promise<T[]> {
       try {
         // Get the role
         const entity = await model.findById(id)
   
-        // Return error if not founc
+        // Return error if not found
         if (!entity) { throw new Error(`Unable to find a ${prefix} with the provided id`) }
+
+        // Check if the user is allowed to see the entity
+        if (permissions.includes(`read_all_${prefix}s`)) {
+          return entity
+        }
   
-        // return the role if found
-        return entity
+        // If the user is not allowed to see all entities
+        // Check if the user created the entity
+        if (entity.createdBy === user._id) {
+          return entity
+        }
+
+        // return error if no criteria is met
+        throw new Error('Insufficient permissions for this query')
       } catch (e) {
         throw new ApolloError(e)
       }
@@ -101,7 +106,7 @@ function createCRUDResolver<T extends ClassType>({
     @Query(() => paginationOutput, { name: `${prefix}s`, nullable: true })
     @Authorized(readAll)
     readAll (
-      @Args() { perPage, page, filters }: paginationInterface
+      @Args() { perPage, page, filters = {} }: paginationInterface
     ): paginationOutput {
       try {
         // Pagiante the model
@@ -111,7 +116,7 @@ function createCRUDResolver<T extends ClassType>({
       }
     }
 
-    @Mutation(() => Boolean)
+    @Mutation(() => Boolean, { name: `delete${capitalize(prefix)}ById` })
     @Authorized(deleteById)
     async deleteById (
       @Args() { id }: byIdInterface
@@ -131,6 +136,21 @@ function createCRUDResolver<T extends ClassType>({
       } catch (e) {
         throw new ApolloError(e)
       }
+    }
+
+    @FieldResolver(() => User)
+    async createdBy (
+      @Root() root: any
+    ) {
+      console.log(root)
+      return userModel.findById(root.createdBy)
+    }
+
+    @FieldResolver(() => User)
+    async lastUpdatedBy (
+      @Root() root: any
+    ) {
+      return userModel.findById(root.lastUpdatedBy)
     }
 
   }

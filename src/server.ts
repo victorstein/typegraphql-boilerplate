@@ -1,4 +1,3 @@
-
 import 'reflect-metadata'
 import 'dotenv/config'
 import { ApolloError, ApolloServer } from 'apollo-server-express'
@@ -12,6 +11,9 @@ import enforce from 'express-sslify'
 import setup from './utils/setup'
 import { cyan, red } from 'chalk'
 
+// Context service
+const contextService = require('request-context')
+
 // Clear the console
 // console.clear()
 
@@ -22,6 +24,9 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;
   try {
     // Create express app
     const app = express()
+
+    // Add context service middleware
+    app.use(contextService.middleware('req'));
 
     // Create Schema
     const schema = await buildSchema({

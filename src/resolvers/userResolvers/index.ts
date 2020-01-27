@@ -12,7 +12,6 @@ import { createUser } from "../../utils/reusableSnippets";
 import passwordResetInterface from "./interfaces/passwordResetInterface";
 import requestPasswordResetInterface from "./interfaces/requestPasswordResetInterface";
 import EmailProvider from "../../utils/emailProvider";
-import byIdInterface from "../globalInterfaces/input/byIdInterface";
 
 const {
   TOKEN_SECRET,
@@ -34,24 +33,6 @@ export default class userResolvers {
   ): User {
     // Return the user collected from the context
     return user
-  }
-
-  @Query(() => User)
-  @Authorized('readUsers')
-  async userById(
-    @Args() { id }: byIdInterface
-  ): Promise<User> {
-    try {
-      // Find the user in the DB
-      const user = await userModel.findById(id)
-
-      // If no user then return error
-      if (!user) { throw new Error('Unable to find the requested user') }
-
-      return user
-    } catch (e) {
-      throw new ApolloError(e)
-    }
   }
 
   @Query(() => Token)
@@ -202,7 +183,7 @@ export default class userResolvers {
   }
 
   @Mutation(() => User)
-  @Authorized('createUsers')
+  @Authorized('create_users')
   createUser(
     @Args() { email, password, confirmPassword, firstName, lastName }: createUserInterface
   ): Promise<User> {
@@ -290,7 +271,7 @@ export default class userResolvers {
     }
   }
 
-  @Mutation(() => Boolean)
+  @Query(() => Boolean)
   async resendVerificationEmail (
     @Args() { email }: requestPasswordResetInterface
   ): Promise<Boolean> {

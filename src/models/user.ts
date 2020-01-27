@@ -1,5 +1,5 @@
 import { ObjectType } from "type-graphql";
-import { prop, modelOptions, getModelForClass, Ref, arrayProp, pre, post, plugin } from '@typegoose/typegoose'
+import { prop, Ref, arrayProp, pre, post, plugin, modelOptions, getModelForClass } from '@typegoose/typegoose'
 import { Field, ID } from 'type-graphql'
 import { Role, roleModel } from "./role";
 import { Permission } from "./permission";
@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import EmailProvider from "../utils/emailProvider";
 import jwt from 'jsonwebtoken'
 import paginate from '../utils/reusableSnippets/pagination'
+import { Base } from './base'
 
 const { GLOBAL_SECRET, EMAIL_VERIFICATION_EXPIRY } = process.env
 
@@ -69,7 +70,7 @@ const { GLOBAL_SECRET, EMAIL_VERIFICATION_EXPIRY } = process.env
 @ObjectType()
 @modelOptions({ schemaOptions: { timestamps: true } })
 @plugin(paginate)
-export class User {
+export class User extends Base {
   @Field(() => ID)
   id: string
 
@@ -78,7 +79,7 @@ export class User {
 
   @prop({ required: true })
   @Field({ nullable: false })
-  firstName: string
+  public firstName: string
 
   @prop({ required: true })
   @Field({ nullable: false })

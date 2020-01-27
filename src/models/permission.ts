@@ -1,12 +1,13 @@
 import { ObjectType, Field, ID } from "type-graphql";
-import { prop, modelOptions, getModelForClass, arrayProp, Ref, plugin } from "@typegoose/typegoose";
+import { prop, getModelForClass, arrayProp, Ref, plugin, modelOptions } from "@typegoose/typegoose";
 import { Role } from "./role";
 import paginate from '../utils/reusableSnippets/pagination'
+import { Base } from "./base";
 
 @ObjectType()
 @modelOptions({ schemaOptions: { timestamps: true } })
 @plugin(paginate)
-export class Permission {
+export class Permission extends Base {
   @Field(() => ID)
   id: string
 

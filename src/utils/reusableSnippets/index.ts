@@ -1,4 +1,6 @@
 import { User, userModel } from "../../models/user"
+import { registerEnumType } from "type-graphql"
+import { Model } from "mongoose"
 
 interface createUser {
   email: string,
@@ -52,9 +54,20 @@ export const legibleTime = (time: string) => {
   }
 }
 
-export const createFilters = (model: any) => {
-  return model.schema.indexes().reduce((x: any, u: any) => {
+export const createFilters = (model: Model<any, {}>, resolverName: string) => {
+  // Get all the indexes from the model to create filterable enum
+  const indexes = model.schema.indexes().reduce((x: any, u: any) => {
     x[Object.keys(u[0])[0].toUpperCase()] = Object.keys(u[0])[0]
     return x
   }, {})
+  
+  // Register the enum type with graphql
+  registerEnumType(indexes, { name: `${resolverName}FilterType` })
+
+  return indexes
+}
+
+export const capitalize = (s: string) => {
+  if (typeof s !== 'string') return ''
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }

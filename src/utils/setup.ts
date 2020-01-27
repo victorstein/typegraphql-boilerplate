@@ -34,11 +34,12 @@ export default async (): Promise<void> => {
     console.log(blue('Checking if any new permissions are needed...'))
     // Get the permissions of all the models
     const permissions: string[] = Object.keys(mongoose.models).reduce((x: string[], u) => {
-      x.push(`create${u}s`)
-      x.push(`read${u}s`)
-      x.push(`readAll${u}s`)
-      x.push(`update${u}s`)
-      x.push(`delete${u}s`)
+      u = u.toLowerCase()
+      x.push(`create_${u}s`)
+      x.push(`read_${u}s`)
+      x.push(`read_all_${u}s`)
+      x.push(`update_${u}s`)
+      x.push(`delete_${u}s`)
       return x
     }, [])
 

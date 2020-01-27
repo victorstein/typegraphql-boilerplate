@@ -20,7 +20,7 @@ export class Role extends Base {
   @Field(() => ID)
   id: string
 
-  @prop({ required: true })
+  @prop({ required: true, text: true })
   @Field({ nullable: false })
   name: string
 

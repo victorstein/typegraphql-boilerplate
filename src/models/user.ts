@@ -77,9 +77,9 @@ export class User extends Base {
   // Used to overcome limitiations in post hook https://github.com/Automattic/mongoose/issues/2162
   wasNew: boolean
 
-  @prop({ required: true })
+  @prop({ required: true, index: true, text: true })
   @Field({ nullable: false })
-  public firstName: string
+  firstName: string
 
   @prop({ required: true })
   @Field({ nullable: false })

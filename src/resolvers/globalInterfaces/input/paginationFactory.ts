@@ -2,10 +2,11 @@ import { Field, ArgsType, ClassType } from "type-graphql";
 import { IsOptional, Min, Max } from "class-validator";
 
 export default function createDynamicPaginationInterface(
-  Filter?: ClassType<any> | null
+  Filter?: ClassType<any> | null,
+  Sort?: ClassType<any> | null
   ): ClassType<any> {
   @ArgsType()
-  class unFilteredPAginationInterface {
+  class unFilteredUnSoretedPginationInterface {
     @Field({ nullable: true, defaultValue: 10 })
     @IsOptional()
     @Min(1, { message: 'The per page param must be between 1 and 25' })
@@ -16,15 +17,43 @@ export default function createDynamicPaginationInterface(
     page: number
   }
 
-  if (!Filter) return unFilteredPAginationInterface
+  if (Filter && !Sort) {
+    type Filter = InstanceType<typeof Filter>;
 
-  type Filter = InstanceType<typeof Filter>;
-
-  @ArgsType()
-  class filteredPaginationInterface extends unFilteredPAginationInterface {
-    @Field(() => [Filter], { nullable: true, defaultValue: [] })
-    filters: Filter[]
+    @ArgsType()
+    class filteredPaginationInterface extends unFilteredUnSoretedPginationInterface {
+      @Field(() => [Filter], { nullable: true, defaultValue: [] })
+      filters: Filter[]
+    }
+    return filteredPaginationInterface
   }
 
-  return filteredPaginationInterface
+  if (Sort && !Filter) {
+    type Sort = InstanceType<typeof Sort>;
+
+    @ArgsType()
+    class sortPaginationInterface extends unFilteredUnSoretedPginationInterface {
+      @Field(() => [Sort], { nullable: true, defaultValue: [] })
+      sort: Sort[]
+    }
+    return sortPaginationInterface
+  }
+
+  if (Sort && Filter) {
+    type Sort = InstanceType<typeof Sort>;
+    type Filter = InstanceType<typeof Filter>;
+    
+    @ArgsType()
+    class sortAndFilterPaginationInterface extends unFilteredUnSoretedPginationInterface {
+      @Field(() => [Sort], { nullable: true, defaultValue: [] })
+      sort: Sort[]
+
+      @Field(() => [Filter], { nullable: true, defaultValue: [] })
+      filters: Filter[]
+    }
+
+    return sortAndFilterPaginationInterface
+  }
+
+  return unFilteredUnSoretedPginationInterface
 }

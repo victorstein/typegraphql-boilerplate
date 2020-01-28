@@ -10,6 +10,7 @@ import helmet from 'helmet'
 import enforce from 'express-sslify'
 import setup from './utils/setup'
 import { cyan, red } from 'chalk'
+import queryComplexityEvaluator from './utils/queryComplexityValidator/queryComplexity'
 
 // Context service
 const contextService = require('request-context')
@@ -61,6 +62,13 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;
       playground: NODE_ENV !== 'production',
       schema,
       debug: NODE_ENV !== 'production',
+      plugins: [{
+        requestDidStart: () => ({
+          didResolveOperation({ request, document }) {
+            queryComplexityEvaluator(request, document, schema)
+          }
+        })
+      }],
       formatError: (err) => {
         const message = err.message.toLowerCase()
         if (message.includes('argument validation error')) {

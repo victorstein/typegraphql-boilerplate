@@ -11,7 +11,7 @@ export class Permission extends Base {
   @Field(() => ID)
   id: string
 
-  @prop({ required: true, text: true })
+  @prop({ required: true, text: true, index: true })
   @Field({ nullable: false })
   name: string
 

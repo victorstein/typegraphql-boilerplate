@@ -8,18 +8,19 @@ import { createFilters } from "../../utils/reusableSnippets";
 const resolverName = 'Permission'
 
 // Create an enum based on the model indexes
-const modelIndexes = createFilters(permissionModel, resolverName)
+const { textIndexes, regularIndexes } = createFilters(permissionModel, resolverName)
 
 // Initialize base CRUD factory
 const CRUDPermission = createCRUDResolver({
   prefix: resolverName,
   returnType: Permission,
   model: permissionModel,
-  allowedSearchCriterias: modelIndexes,
+  allowedSearchCriterias: textIndexes,
+  allowedSortCriterias: regularIndexes,
   permissions: {
-    findById: ['read_all_permissions', 'read_permissions'],
-    readAll: ['read_all_permissions', 'read_permissions'],
-    deleteById: ['delete_permission']
+    findById: [`read_all_${resolverName}s`, `read_${resolverName}s`],
+    readAll: [`read_all_${resolverName}s`, `read_${resolverName}s`],
+    deleteById: [`delete_${resolverName}s`]
   }
 })
 

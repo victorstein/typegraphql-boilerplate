@@ -3,9 +3,12 @@ import byIdInterface from "../globalInterfaces/input/byIdInterface";
 import { ApolloError } from "apollo-server-express";
 import { userModel, User } from "../../models/user";
 import { capitalize } from "../../utils/reusableSnippets";
-import createDynamicFilterType from "../globalInterfaces/input/filterFactory";
+import { createDynamicFilterType, createDynamicSortType } from "../globalInterfaces/input/filterFactory";
 import createDynamicPaginationInterface from "../globalInterfaces/input/paginationFactory";
 import createPaginationOutput from "../globalInterfaces/output/pagintationOutput";
+import { Validator } from "class-validator";
+
+const validator = new Validator()
 
 interface permissionType {
   findById: string[],
@@ -30,7 +33,6 @@ function createCRUDResolver<T extends ClassType>({
   allowedSortCriterias,
   permissions
 }: createCRUD) {
-  console.log(allowedSortCriterias)
   // Lowercase the prefix for consistency
   prefix = prefix.toLowerCase()
 
@@ -49,14 +51,20 @@ function createCRUDResolver<T extends ClassType>({
 
   // declare the filter
   let Filter: ClassType | null = null
+  let Sort: ClassType | null = null
 
   // Create dynamic filter if needed
   if (Object.keys(allowedSearchCriterias).length) {
     Filter = createDynamicFilterType(allowedSearchCriterias, prefix)
   }
 
+  // Create dynamic sorting if needed
+  if (Object.keys(allowedSortCriterias).length) {
+    Sort = createDynamicSortType(allowedSortCriterias, prefix)
+  }
+
   // Create dynamic pagination interface
-  const paginationInterface = createDynamicPaginationInterface(Filter)
+  const paginationInterface = createDynamicPaginationInterface(Filter, Sort)
   type paginationInterface = InstanceType<typeof paginationInterface>;
 
   // Dynamic output using the return type
@@ -95,7 +103,7 @@ function createCRUDResolver<T extends ClassType>({
     @Query(() => paginationOutput, { name: `${prefix}s`, nullable: true })
     @Authorized(readAll)
     readAll (
-      @Args() { perPage, page, filters = {} }: paginationInterface,
+      @Args() { perPage, page, filters = [], sort = [] }: paginationInterface,
       @Ctx() { permissions, user }: any
     ): paginationOutput {
       try {
@@ -107,7 +115,7 @@ function createCRUDResolver<T extends ClassType>({
 
         // If the user is not allowed to see all entities
         // Check if the user created the entity
-        return model.paginate(filters, { page, perPage })
+        return model.paginate(filters, { page, perPage, sort })
       } catch (e) {
         throw new ApolloError(e)
       }
@@ -139,14 +147,20 @@ function createCRUDResolver<T extends ClassType>({
     async createdBy (
       @Root() root: any
     ) {
-      return userModel.findById(root.createdBy)
+      if (validator.isMongoId(root.createdBy)) {
+        return userModel.findById(root.createdBy)
+      }
+      return root.createdBy
     }
 
     @FieldResolver(() => User, { name: 'lastUpdatedBy' })
     async lastUpdatedBy (
       @Root() root: any
     ) {
-      return userModel.findById(root.lastUpdatedBy)
+      if (validator.isMongoId(root.lastUpdatedBy)) {
+        return userModel.findById(root.lastUpdatedBy)
+      }
+      return root.lastUpdatedBy
     }
 
   }

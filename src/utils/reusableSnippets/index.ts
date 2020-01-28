@@ -55,14 +55,32 @@ export const legibleTime = (time: string) => {
 }
 
 export const createFilters = (model: Model<any, {}>, resolverName: string) => {
-  // Get all the indexes from the model to create filterable enum
-  const indexes = model.schema.indexes().reduce((x: any, u: any) => {
-    x[Object.keys(u[0])[0].toUpperCase()] = Object.keys(u[0])[0]
+  const modelData: any = model.schema
+
+  // Get all the text and regular indexes
+  const indexes = Object.entries(modelData.paths).reduce((x: any, u: any) => {
+    const { options } = u[1]
+    if (options.text) {
+      x.textIndexes[u[0].toUpperCase()] = u[0]
+    }
+    if (options.index) {
+      x.regularIndexes[u[0].toUpperCase()] = u[0]
+    }
     return x
-  }, {})
+  }, {
+    textIndexes: {},
+    regularIndexes: {}
+  })
   
-  // Register the enum type with graphql
-  registerEnumType(indexes, { name: `${resolverName}FilterType` })
+  // Register regularIndexes enum type with graphql
+  if (Object.keys(indexes.regularIndexes).length) {
+    registerEnumType(indexes.regularIndexes, { name: `${resolverName}SortType` })
+  }
+
+  // Register textIndexes enum type with graphql
+  if (Object.keys(indexes.textIndexes).length) {
+    registerEnumType(indexes.textIndexes, { name: `${resolverName}FilterType` })
+  }
 
   return indexes
 }

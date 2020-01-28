@@ -18,13 +18,13 @@ async function paginate (this: any,
   query: any,
   options: paginationOptions = {
     select: {},
-    sort: {},
+    sort: [],
     page: 1,
     perPage: 10
   }
 ): Promise<paginateOutput> {
   // get data from options
-  const { select, sort, page, perPage } = options
+  let { select, sort, page, perPage } = options
 
   // Parse the query coming from the query
   const parsedQuery = JSON.parse(JSON.stringify(query))
@@ -37,6 +37,19 @@ async function paginate (this: any,
     }, {})
   } else {
     query = {}
+  }
+
+  // Parse the sort coming from the sort param
+  const parsedSort = JSON.parse(JSON.stringify(sort))
+
+  if (sort.length) {
+    // Construct the sort
+    sort = parsedSort.reduce((x: any, u: any) => {
+      x[u.field] = u.direction
+      return x
+    }, {})
+  } else {
+    sort = {}
   }
 
   // calculate skip

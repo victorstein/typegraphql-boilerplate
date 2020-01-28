@@ -12,6 +12,8 @@ import { createUser } from "../../utils/reusableSnippets";
 import passwordResetInterface from "./interfaces/passwordResetInterface";
 import requestPasswordResetInterface from "./interfaces/requestPasswordResetInterface";
 import EmailProvider from "../../utils/emailProvider";
+import createCRUDResolver from "../globalResolvers/crudBaseResolver"
+import { createFilters } from "../../utils/reusableSnippets";
 
 const {
   TOKEN_SECRET,
@@ -23,8 +25,28 @@ const {
   GLOBAL_SECRET
 } = process.env
 
+// Define the prefix of the resolvers
+const resolverName = 'User'
+
+// Create an enum based on the model indexes
+const { textIndexes, regularIndexes } = createFilters(userModel, resolverName)
+
+// Initialize base CRUD factory
+const CRUDUser = createCRUDResolver({
+  prefix: resolverName,
+  returnType: User,
+  model: userModel,
+  allowedSearchCriterias: textIndexes,
+  allowedSortCriterias: regularIndexes,
+  permissions: {
+    findById: [`read_all_${resolverName}s`, `read_${resolverName}s`],
+    readAll: [`read_all_${resolverName}s`, `read_${resolverName}s`],
+    deleteById: [`delete_${resolverName}s`]
+  }
+})
+
 @Resolver(() => User)
-export default class userResolvers {
+export default class userResolvers extends CRUDUser {
   
   @Query(() => User)
   @Authorized()
@@ -105,8 +127,8 @@ export default class userResolvers {
       }
 
       // If the token is valid create a new token for the user
-      const newToken = jwt.sign(newPayload, REFRESH_TOKEN_SECRET!, {
-        expiresIn: REFRESH_TOKEN_SECRET_EXPIRATION
+      const newToken = jwt.sign(newPayload, TOKEN_SECRET!, {
+        expiresIn: TOKEN_SECRET_EXPIRATION
       })
 
       return newToken

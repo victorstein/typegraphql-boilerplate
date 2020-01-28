@@ -9,18 +9,19 @@ import { createFilters } from "../../utils/reusableSnippets"
 const resolverName = 'Role'
 
 // Create an enum based on the model indexes
-const modelIndexes = createFilters(roleModel, resolverName)
+const { textIndexes, regularIndexes } = createFilters(roleModel, resolverName)
 
 // Initialize base CRUD factory
 const CRUDRole = createCRUDResolver({
   prefix: resolverName,
   returnType: Role,
   model: roleModel,
-  allowedSearchCriterias: modelIndexes,
+  allowedSearchCriterias: textIndexes,
+  allowedSortCriterias: regularIndexes,
   permissions: {
-    findById: ['read_all_roles', 'read_roles'],
-    readAll: ['read_all_roles', 'read_roles'],
-    deleteById: ['delete_roles']
+    findById: [`read_all_${resolverName}s`, `read_${resolverName}s`],
+    readAll: [`read_all_${resolverName}s`, `read_${resolverName}s`],
+    deleteById: [`delete_${resolverName}s`]
   }
 })
 

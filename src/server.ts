@@ -26,6 +26,9 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;
     // Create express app
     const app = express()
 
+    // Get the left-most ip from the X-Forwarded-* header
+    app.set('trust proxy', true)
+
     // Add context service middleware
     app.use(contextService.middleware('req'));
 

@@ -1,5 +1,5 @@
 import { AuthChecker } from "type-graphql"
-import { AuthenticationError } from "apollo-server-express"
+import { ApolloError } from "apollo-server-express"
 import jwt from 'jsonwebtoken'
 import 'dotenv/config'
 import { userModel } from "../models/user"
@@ -63,7 +63,7 @@ const authChecker:AuthChecker<any> = async ({ context }, permissions): Promise<b
     return true
   } catch (e) {
     console.log(e.message)
-    throw new AuthenticationError(e)
+    throw new ApolloError(e.message, 'UNAUTHORIZED')
   }
 }
 

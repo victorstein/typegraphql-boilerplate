@@ -14,6 +14,7 @@ import requestPasswordResetInterface from "./interfaces/requestPasswordResetInte
 import EmailProvider from "../../utils/emailProvider";
 import createCRUDResolver from "../globalResolvers/crudBaseResolver"
 import { createFilters } from "../../utils/reusableSnippets";
+import LimitRate from "../../middlewares/rateLimiter";
 
 const {
   TOKEN_SECRET,
@@ -58,6 +59,7 @@ export default class userResolvers extends CRUDUser {
   }
 
   @Query(() => Token)
+  @LimitRate('login', 5)
   async login (
     @Args() { email, password }: loginInterface
   ): Promise<Token> {

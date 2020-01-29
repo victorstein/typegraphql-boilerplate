@@ -1,5 +1,6 @@
 import { getComplexity, simpleEstimator, fieldExtensionsEstimator } from "graphql-query-complexity";
 import { separateOperations } from "graphql";
+import Error from '../../middlewares/errorHandler'
 
 const queryComplexityEvaluator = (request: any, document: any, schema: any) => {
   const complexity = getComplexity({
@@ -16,7 +17,7 @@ const queryComplexityEvaluator = (request: any, document: any, schema: any) => {
 
   if (complexity > 20) {
     throw new Error(
-      `The complexity of the query exeeds the server allowed quota`,
+      `The complexity of the query exeeds the server allowed quota. Please contact the server admin.`, 413
     );
   }
 }

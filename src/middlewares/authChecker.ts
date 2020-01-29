@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import 'dotenv/config'
 import { userModel } from "../models/user"
 import { permissionModel } from "../models/permission"
+import Error from './errorHandler'
 
 var contextService = require('request-context');
 
@@ -13,7 +14,7 @@ const authChecker:AuthChecker<any> = async ({ context }, permissions): Promise<b
     let headers = context.req.headers
 
     // Check that the headers contain the Authorization header
-    if (!headers.authorization) { throw new Error('Missing Authorization Header') }
+    if (!headers.authorization) { throw new Error('Missing Authorization Header', 401) }
 
     // Get the token from the authorization header
     const token = headers.authorization.split(" ")[1]
@@ -25,7 +26,7 @@ const authChecker:AuthChecker<any> = async ({ context }, permissions): Promise<b
     const user = await userModel.findById(payload.id, { password: 0 })
 
     // Return and error if no user found
-    if (!user) { throw new Error('Insufficient permissions to perform this action') }
+    if (!user) { throw new Error('Insufficient permissions to perform this action', 401) }
 
     // Insert the user in the express context
     contextService.set('req:user', user)
@@ -48,13 +49,13 @@ const authChecker:AuthChecker<any> = async ({ context }, permissions): Promise<b
 
       // Check if the required permission exits in the user permissions
       if (!permissions.some((u: string) => userPermissions.includes(u))) {
-        throw new Error('Insufficient permissions for this query')
+        throw new Error('Insufficient permissions for this query', 403)
       }      
     }
 
     // Once permission were verified proceed to check token version
     if (user.tokenVersion !== payload.tokenVersion) {
-      throw new Error('Invalid token')
+      throw new Error('Invalid token', 401)
     }
 
     // Add the user to context
@@ -62,8 +63,7 @@ const authChecker:AuthChecker<any> = async ({ context }, permissions): Promise<b
     context.permissions = userPermissions
     return true
   } catch (e) {
-    console.log(e.message)
-    throw new ApolloError(e.message, 'UNAUTHORIZED')
+    throw new ApolloError(e.message, e.code)
   }
 }
 

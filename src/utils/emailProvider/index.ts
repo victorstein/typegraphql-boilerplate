@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer')
 import templates from './emailTemplates'
 import { cyan } from 'chalk'
 import { legibleTime } from '../reusableSnippets'
+import Error from '../../middlewares/errorHandler'
 
 // Import the email templates
 const { welcomeEmail, passwordReset } = templates
@@ -71,7 +72,7 @@ export default class EmailProvider {
           expiry: legibleTime(PASSWORD_RESET_REQUEST_EXPIRY!)
         })
       default:
-        throw new Error('Invalid email template')
+        throw new Error('Invalid email template', 500)
     }
   }
 

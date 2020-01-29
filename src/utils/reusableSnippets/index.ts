@@ -1,6 +1,7 @@
 import { User, userModel } from "../../models/user"
 import { registerEnumType } from "type-graphql"
 import { Model } from "mongoose"
+import Error from '../../middlewares/errorHandler'
 
 interface createUser {
   email: string,
@@ -19,11 +20,11 @@ export const createUser = (
       const user = await userModel.findOne({ email })
 
       // Throw error if user already exists
-      if (user) { throw new Error('Unable to process your request with the provided email') }
+      if (user) { throw new Error('Unable to process your request with the provided email', 400) }
 
       // if user does not exist proceed to chech that the passwords match
       if (password !== confirmPassword) {
-        throw new Error('The passwords do not match')
+        throw new Error('The passwords do not match', 400)
       }
 
       // If the passwords match proceed to create the user

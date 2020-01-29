@@ -2,6 +2,7 @@ import { roleModel } from "../models/role"
 import { mongoose } from "@typegoose/typegoose"
 import { permissionModel } from "../models/permission"
 import { blue, greenBright, red } from 'chalk'
+import Error from '../middlewares/errorHandler'
 
 export default async (): Promise<void> => {
   try {

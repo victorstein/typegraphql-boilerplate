@@ -39,7 +39,7 @@ export default class roleResolvers extends CRUDRole {
         permissions
       })
     } catch (e) {
-      throw new ApolloError(e)
+      throw new ApolloError(e.message, e.code)
     }
   }
 }

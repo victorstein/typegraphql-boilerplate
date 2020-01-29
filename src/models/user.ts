@@ -9,6 +9,8 @@ import EmailProvider from "../utils/emailProvider";
 import jwt from 'jsonwebtoken'
 import paginate from '../utils/reusableSnippets/pagination'
 import { Base } from './base'
+import Error from '../middlewares/errorHandler'
+import { ApolloError } from "apollo-server-express";
 
 const { GLOBAL_SECRET, EMAIL_VERIFICATION_EXPIRY } = process.env
 
@@ -25,7 +27,7 @@ const { GLOBAL_SECRET, EMAIL_VERIFICATION_EXPIRY } = process.env
     const baseRole = await roleModel.findOne({ usedFor: 'baseRole' }, { id: 1 })
 
     // Check that these roles exists
-    if (!adminRole || !baseRole) { throw new Error('Server Error') }
+    if (!adminRole || !baseRole) { throw new Error('Server Error', 500) }
 
     // Assign the admin role if is the first user on the DB
     if (await userModel.estimatedDocumentCount() > 0) {
@@ -63,7 +65,7 @@ const { GLOBAL_SECRET, EMAIL_VERIFICATION_EXPIRY } = process.env
     next!()
   } catch(e) {
     console.log(e)
-    throw new Error(e)
+    throw new ApolloError(e.message, e.code)
   }
 })
 

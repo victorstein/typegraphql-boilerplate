@@ -92,6 +92,6 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;
     app.listen(PORT, () => console.log(cyan(`Server running on http://localhost:${PORT}/graphql`)))
   } catch (e) {
     console.log(red(e))
-    throw new ApolloError(e)
+    throw new ApolloError(e.message, e.code)
   }
 })()

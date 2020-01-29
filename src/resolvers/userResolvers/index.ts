@@ -15,6 +15,7 @@ import EmailProvider from "../../utils/emailProvider";
 import createCRUDResolver from "../globalResolvers/crudBaseResolver"
 import { createFilters } from "../../utils/reusableSnippets";
 import LimitRate from "../../middlewares/rateLimiter";
+import Error from '../../middlewares/errorHandler'
 
 const {
   TOKEN_SECRET,
@@ -68,16 +69,16 @@ export default class userResolvers extends CRUDUser {
       const user = await userModel.findOne({ email })
 
       // Throw error if user doesnt exists
-      if (!user) { throw new Error('The provided email or password is invalid') }
+      if (!user) { throw new Error('The provided email or password is invalid', 401) }
 
       // Check if the password matches the hash
       const valid = await bcrypt.compare(password, user.password)
 
       // If invalid return error
-      if (!valid) { throw new Error('The provided email or password is invalid') }
+      if (!valid) { throw new Error('The provided email or password is invalid', 401) }
 
       // If the login is valid proceed to check if the user has been verified
-      if (!user.verified) { throw new Error('The account has not yet been verified. Please check your email and verify your account.') }
+      if (!user.verified) { throw new Error('The account has not yet been verified. Please check your email and verify your account.', 403) }
 
       // Create the payload
       const payload = {
@@ -113,11 +114,11 @@ export default class userResolvers extends CRUDUser {
       const user = await userModel.findById({ _id: payload.id })
 
       // If the user doesnt exist return error
-      if (!user) { throw new Error('Invalid token') }
+      if (!user) { throw new Error('Invalid token', 400) }
 
       // Verify the token version
       if (user.tokenVersion !== payload.tokenVersion) {
-        throw new Error('Invalid token')
+        throw new Error('Invalid token', 400)
       }
 
       // Create new payload
@@ -136,7 +137,7 @@ export default class userResolvers extends CRUDUser {
       return newToken
     } catch (e) {
       console.log(e)
-      throw new ApolloError(e)
+      throw new ApolloError(e.message, e.code)
     }
   }
 
@@ -149,16 +150,16 @@ export default class userResolvers extends CRUDUser {
       const payload:any = jwt.verify(hash, GLOBAL_SECRET!)
 
       // If no user in the payload return false
-      if (!payload.id) { throw new Error('Invalid payload') }
+      if (!payload.id) { throw new Error('Invalid payload', 400) }
 
       // Get the id from the payload and locate user
       let user = await userModel.findById(payload.id)
 
       // If no user return error
-      if (!user) { throw new Error('The link is invalid or may have expired') }
+      if (!user) { throw new Error('The link is invalid or may have expired', 403) }
 
       if (user.verified) {
-        throw new Error('The user has already been verified')
+        throw new Error('The user has already been verified', 400)
       }
 
       // If the user was found update the verified param
@@ -171,7 +172,7 @@ export default class userResolvers extends CRUDUser {
       return true
     } catch (e) {
       console.log(e)
-      throw new ApolloError(e)
+      throw new ApolloError(e.message, e.code)
     }
   }
 
@@ -214,7 +215,7 @@ export default class userResolvers extends CRUDUser {
     try {
       return createUser({ email, password, confirmPassword, firstName, lastName })
     } catch (e) {
-      throw new ApolloError(e)
+      throw new ApolloError(e.message, e.code)
     }
   }
 
@@ -225,12 +226,12 @@ export default class userResolvers extends CRUDUser {
     try {
       // Check if the admin role was already created
       if (await userModel.estimatedDocumentCount() === 0) {
-        throw new Error('Unable to process your request')
+        throw new Error('Unable to process your request', 400)
       }
 
       return createUser({ email, password, confirmPassword, firstName, lastName })
     } catch (e) {
-      throw new ApolloError(e)
+      throw new ApolloError(e.message, e.code)
     }
   }
 
@@ -241,12 +242,12 @@ export default class userResolvers extends CRUDUser {
     try {
       // Check if the admin role was already created
       if (await userModel.estimatedDocumentCount() > 0) {
-        throw new Error('Unable to process your request')
+        throw new Error('Unable to process your request', 400)
       }
 
       return createUser({ email, password, confirmPassword, firstName, lastName })
     } catch (e) {
-      throw new ApolloError(e)
+      throw new ApolloError(e.message, e.code)
     }
   }
 
@@ -256,23 +257,23 @@ export default class userResolvers extends CRUDUser {
   ): Promise<boolean> {
     try {
       // Check if passwords match
-      if (password !== confirmPassword) { throw new Error('Passwords provided do not match') }
+      if (password !== confirmPassword) { throw new Error('Passwords provided do not match', 400) }
 
       // retreive the id of the requester from the hash
       const { id, version }: any = jwt.verify(hash, GLOBAL_SECRET!)
 
       // If no id then return error
-      if (!id) { throw new Error('The reset password link provided has been used or it has expired') }
+      if (!id) { throw new Error('The reset password link provided has been used or it has expired', 403) }
 
       // Retreive the user using the id
       const user = await userModel.findById(id)
 
       // If user not found return error
-      if (!user) { throw new Error('Invalid request') }
+      if (!user) { throw new Error('Invalid request', 400) }
 
       // If the versions dont match return error
       if (version !== user.passwordRecoveryVersion) {
-        throw new Error('The reset password link provided has been used or it has expired')
+        throw new Error('The reset password link provided has been used or it has expired', 403)
       }
 
       // If user found proceed to hash the new password
@@ -291,7 +292,7 @@ export default class userResolvers extends CRUDUser {
       return true
     } catch (e) {
       console.log(e)
-      throw new ApolloError(e)
+      throw new ApolloError(e.message, e.code)
     }
   }
 
@@ -304,10 +305,10 @@ export default class userResolvers extends CRUDUser {
       const user = await userModel.findOne({ email })
 
       // Return error if no user
-      if (!user) { throw new Error('The provided email is invalid') }
+      if (!user) { throw new Error('The provided email is invalid', 400) }
 
       // If the user was found check if is not verified
-      if (user.verified) { throw new Error('User is already verified') }
+      if (user.verified) { throw new Error('User is already verified', 400) }
 
       // Use jsonwebtoken to create a unique hash with the user info
       const hash = jwt.sign({ id: user._id }, GLOBAL_SECRET!, { expiresIn: EMAIL_VERIFICATION_EXPIRY })
@@ -330,7 +331,7 @@ export default class userResolvers extends CRUDUser {
       return true
     } catch (e) {
       console.log(e)
-      throw new ApolloError(e)
+      throw new ApolloError(e.message, e.code)
     }
   }
 
@@ -350,11 +351,11 @@ export default class userResolvers extends CRUDUser {
       const role = await roleModel.findById(root.role)
 
       // If theres no role throw error (users should always have a role)
-      if (!role) { throw new Error('There was an error while processing your request') }
+      if (!role) { throw new Error('There was an error while processing your request', 400) }
 
       return role
     } catch(e) {
-      throw new ApolloError(e)
+      throw new ApolloError(e.message, e.code)
     }
   }
   
@@ -372,7 +373,7 @@ export default class userResolvers extends CRUDUser {
 
       return permissions
     } catch (e) {
-      throw new ApolloError(e)
+      throw new ApolloError(e.message, e.code)
     }
   }
 }

@@ -7,6 +7,7 @@ import { createDynamicFilterType, createDynamicSortType } from "../globalInterfa
 import createDynamicPaginationInterface from "../globalInterfaces/input/paginationFactory";
 import createPaginationOutput from "../globalInterfaces/output/pagintationOutput";
 import { Validator } from "class-validator";
+import Error from '../../middlewares/errorHandler'
 
 const validator = new Validator()
 
@@ -92,11 +93,11 @@ function createCRUDResolver<T extends ClassType>({
         const entity = await model.findOne(filters)
   
         // Return error if not found
-        if (!entity) { throw new Error(`Unable to find a ${prefix} with the provided id`) }
+        if (!entity) { throw new Error(`Unable to find a ${prefix} with the provided id`, 404) }
 
         return entity
       } catch (e) {
-        throw new ApolloError(e)
+        throw new ApolloError(e.message, e.code)
       }
     }
 
@@ -117,7 +118,7 @@ function createCRUDResolver<T extends ClassType>({
         // Check if the user created the entity
         return model.paginate(filters, { page, perPage, sort })
       } catch (e) {
-        throw new ApolloError(e)
+        throw new ApolloError(e.message, e.code)
       }
     }
 
@@ -131,7 +132,7 @@ function createCRUDResolver<T extends ClassType>({
         const entity = await model.findById(id)
 
         // If no role return error
-        if (!entity) { throw new Error(`The provided ${prefix} is invalid`) }
+        if (!entity) { throw new Error(`The provided ${prefix} is invalid`, 404) }
 
         // If the role exists proceed to delete it
         await entity.remove()
@@ -139,7 +140,7 @@ function createCRUDResolver<T extends ClassType>({
         // return true upon successful deleteion
         return true
       } catch (e) {
-        throw new ApolloError(e)
+        throw new ApolloError(e.message, e.code)
       }
     }
 

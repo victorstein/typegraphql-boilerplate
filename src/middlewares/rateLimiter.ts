@@ -1,5 +1,6 @@
 import { createMethodDecorator } from "type-graphql";
 import { ipModel } from "../models/ip";
+import Error from '../middlewares/errorHandler'
 
 export default function LimitRate(offenseName:string, offenseLimit:number) {
   return createMethodDecorator(async ({ context }, next) => {
@@ -19,7 +20,7 @@ export default function LimitRate(offenseName:string, offenseLimit:number) {
 
     // Check if we have exceeded the offense limit
     if (offense.times >= offenseLimit) {
-      throw new Error('Unable to process your request. Try again later')
+      throw new Error('Unable to process your request. Try again later', 429)
     }
 
     // If theres a registered offense incremet the offense iteration

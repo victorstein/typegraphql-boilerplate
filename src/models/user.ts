@@ -10,7 +10,6 @@ import jwt from 'jsonwebtoken'
 import paginate from '../utils/reusableSnippets/pagination'
 import { Base } from './base'
 import Error from '../middlewares/errorHandler'
-import { ApolloError } from "apollo-server-express";
 
 const { GLOBAL_SECRET, EMAIL_VERIFICATION_EXPIRY } = process.env
 
@@ -64,8 +63,7 @@ const { GLOBAL_SECRET, EMAIL_VERIFICATION_EXPIRY } = process.env
 
     next!()
   } catch(e) {
-    console.log(e)
-    throw new ApolloError(e.message, e.code)
+    throw new Error(e)
   }
 })
 

@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import 'dotenv/config'
-import { ApolloError, ApolloServer } from 'apollo-server-express'
+import { ApolloServer } from 'apollo-server-express'
 import express, { json } from 'express'
 import { buildSchema } from 'type-graphql'
 import resolvers from './resolvers'
@@ -9,8 +9,9 @@ import { mongoose } from '@typegoose/typegoose'
 import helmet from 'helmet'
 import enforce from 'express-sslify'
 import setup from './utils/setup'
-import { cyan, red } from 'chalk'
+import { cyan, red, gray } from 'chalk'
 import queryComplexityEvaluator from './utils/queryComplexityValidator/queryComplexity'
+import Error from './middlewares/errorHandler'
 
 // Context service
 const contextService = require('request-context')
@@ -64,7 +65,7 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;
       },
       playground: NODE_ENV !== 'production',
       schema,
-      debug: NODE_ENV !== 'production',
+      debug: false,
       plugins: [{
         requestDidStart: () => ({
           didResolveOperation({ request, document }) {
@@ -80,7 +81,8 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;
         } else if (message.includes('invalid signature') || message.includes('invalid token')) {
           err.message = 'Invalid request'
         }
-        console.log(red(err.message))
+
+        console.log(red(err.message), gray(err.extensions?.code))
         return err
       }
     })
@@ -90,8 +92,8 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;
 
     // listen to port
     app.listen(PORT, () => console.log(cyan(`Server running on http://localhost:${PORT}/graphql`)))
-  } catch (e) {
-    console.log(red(e))
-    throw new ApolloError(e.message, e.code)
+  } catch ({ message, code }) {
+    console.log(red(message))
+    throw new Error(message, code)
   }
 })()

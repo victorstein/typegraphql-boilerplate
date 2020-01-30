@@ -1,3 +1,5 @@
+import { ApolloError } from "apollo-server-express"
+
 const checkError = (errorCode: number = 500): string => {
   let error: string
   switch (errorCode) {
@@ -26,11 +28,11 @@ const checkError = (errorCode: number = 500): string => {
   return error
 }
 
-export default class ErrorHandler extends Error {
-  code: string
+export default class ErrorHandler extends ApolloError {
+  code: number | undefined
   constructor (message:string, code?:number) {
-    super()
+    super(message, checkError(code))
+    this.code = code
     this.message = message
-    this.code = checkError(code)
   }
 }

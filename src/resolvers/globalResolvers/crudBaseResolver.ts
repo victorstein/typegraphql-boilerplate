@@ -1,6 +1,5 @@
 import { ClassType, Resolver, Query, Args, Mutation, Authorized, EnumResolver, FieldResolver, Root, Ctx } from "type-graphql";
 import byIdInterface from "../globalInterfaces/input/byIdInterface";
-import { ApolloError } from "apollo-server-express";
 import { userModel, User } from "../../models/user";
 import { capitalize } from "../../utils/reusableSnippets";
 import { createDynamicFilterType, createDynamicSortType } from "../globalInterfaces/input/filterFactory";
@@ -96,8 +95,8 @@ function createCRUDResolver<T extends ClassType>({
         if (!entity) { throw new Error(`Unable to find a ${prefix} with the provided id`, 404) }
 
         return entity
-      } catch (e) {
-        throw new ApolloError(e.message, e.code)
+      } catch ({ message, code }) {
+        throw new Error(message, code)
       }
     }
 
@@ -117,8 +116,8 @@ function createCRUDResolver<T extends ClassType>({
         // If the user is not allowed to see all entities
         // Check if the user created the entity
         return model.paginate(filters, { page, perPage, sort })
-      } catch (e) {
-        throw new ApolloError(e.message, e.code)
+      } catch ({ message, code }) {
+        throw new Error(message, code)
       }
     }
 
@@ -139,8 +138,8 @@ function createCRUDResolver<T extends ClassType>({
 
         // return true upon successful deleteion
         return true
-      } catch (e) {
-        throw new ApolloError(e.message, e.code)
+      } catch ({ message, code }) {
+        throw new Error(message, code)
       }
     }
 

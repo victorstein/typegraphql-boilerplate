@@ -74,7 +74,6 @@ export default async (): Promise<void> => {
       console.log(greenBright('No extra permissions created, everything is up to date.'))
     }
   } catch (e) {
-    console.log(e)
     throw new Error(e)
   }
 }

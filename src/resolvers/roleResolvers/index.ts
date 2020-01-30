@@ -1,9 +1,9 @@
 import { Mutation, Resolver, Args, Authorized } from "type-graphql"
 import { Role, roleModel } from "../../models/role"
-import { ApolloError } from "apollo-server-express"
 import createRoleInterface from './interfaces/createRoleInterface'
 import createCRUDResolver from "../globalResolvers/crudBaseResolver"
 import { createFilters } from "../../utils/reusableSnippets"
+import Error from '../../middlewares/errorHandler'
 
 // Define the prefix of the resolvers
 const resolverName = 'Role'
@@ -38,8 +38,8 @@ export default class roleResolvers extends CRUDRole {
         name,
         permissions
       })
-    } catch (e) {
-      throw new ApolloError(e.message, e.code)
+    } catch ({ message, code }) {
+      throw new Error(message, code)
     }
   }
 }

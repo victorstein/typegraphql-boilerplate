@@ -1,7 +1,6 @@
 import { Resolver, Mutation, Args, Query, Authorized, Ctx, FieldResolver, Root, Arg } from "type-graphql";
 import { User, userModel } from "../../models/user";
 import createUserInterface from "./interfaces/createUser";
-import { ApolloError, AuthenticationError } from "apollo-server-express";
 import Token from "./outputTypes/token";
 import loginInterface from "./interfaces/loginInterface";
 import bcrypt from 'bcryptjs'
@@ -60,7 +59,7 @@ export default class userResolvers extends CRUDUser {
   }
 
   @Query(() => Token)
-  @LimitRate('login', 5)
+  @LimitRate('login', 30)
   async login (
     @Args() { email, password }: loginInterface
   ): Promise<Token> {
@@ -97,8 +96,8 @@ export default class userResolvers extends CRUDUser {
       const refreshTokenExpiration = { createdAt: refreshTokenData.iat, expiresAt: refreshTokenData.exp }
 
       return { token, refreshToken, refreshTokenExpiration }
-    } catch (e) {
-      throw new AuthenticationError(e)
+    } catch ({ message, code }) {
+      throw new Error(message, code)
     }
   }
 
@@ -135,9 +134,8 @@ export default class userResolvers extends CRUDUser {
       })
 
       return newToken
-    } catch (e) {
-      console.log(e)
-      throw new ApolloError(e.message, e.code)
+    } catch ({ message, code }) {
+      throw new Error(message, code)
     }
   }
 
@@ -170,9 +168,8 @@ export default class userResolvers extends CRUDUser {
 
       // return true for successful operation
       return true
-    } catch (e) {
-      console.log(e)
-      throw new ApolloError(e.message, e.code)
+    } catch ({ message, code }) {
+      throw new Error(message, code)
     }
   }
 
@@ -214,8 +211,8 @@ export default class userResolvers extends CRUDUser {
   ): Promise<User> {
     try {
       return createUser({ email, password, confirmPassword, firstName, lastName })
-    } catch (e) {
-      throw new ApolloError(e.message, e.code)
+    } catch ({ message, code }) {
+      throw new Error(message, code)
     }
   }
 
@@ -230,8 +227,8 @@ export default class userResolvers extends CRUDUser {
       }
 
       return createUser({ email, password, confirmPassword, firstName, lastName })
-    } catch (e) {
-      throw new ApolloError(e.message, e.code)
+    } catch ({ message, code }) {
+      throw new Error(message, code)
     }
   }
 
@@ -246,8 +243,8 @@ export default class userResolvers extends CRUDUser {
       }
 
       return createUser({ email, password, confirmPassword, firstName, lastName })
-    } catch (e) {
-      throw new ApolloError(e.message, e.code)
+    } catch ({ message, code }) {
+      throw new Error(message, code)
     }
   }
 
@@ -290,9 +287,8 @@ export default class userResolvers extends CRUDUser {
       await user.save()
 
       return true
-    } catch (e) {
-      console.log(e)
-      throw new ApolloError(e.message, e.code)
+    } catch ({ message, code }) {
+      throw new Error(message, code)
     }
   }
 
@@ -329,9 +325,8 @@ export default class userResolvers extends CRUDUser {
       await emailProvider.sendEmail()
 
       return true
-    } catch (e) {
-      console.log(e)
-      throw new ApolloError(e.message, e.code)
+    } catch ({ message, code }) {
+      throw new Error(message, code)
     }
   }
 
@@ -354,8 +349,8 @@ export default class userResolvers extends CRUDUser {
       if (!role) { throw new Error('There was an error while processing your request', 400) }
 
       return role
-    } catch(e) {
-      throw new ApolloError(e.message, e.code)
+    } catch({ message, code }) {
+      throw new Error(message, code)
     }
   }
   
@@ -372,8 +367,8 @@ export default class userResolvers extends CRUDUser {
       })
 
       return permissions
-    } catch (e) {
-      throw new ApolloError(e.message, e.code)
+    } catch ({ message, code }) {
+      throw new Error(message, code)
     }
   }
 }

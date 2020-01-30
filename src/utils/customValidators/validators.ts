@@ -26,7 +26,6 @@ export function areMongoIds(validationOptions?: ValidationOptions) {
             // Return the validation results
             return validIds
           } catch(e) {
-            console.log(e)
             return false
           }
         }
@@ -64,7 +63,6 @@ export function areValidPermissions(validationOptions?: ValidationOptions) {
             // If all permissions found pass the validation
             return true
           } catch(e) {
-            console.log(e)
             return false
           }
         }
@@ -102,7 +100,6 @@ export function nameNotTaken(model: models, validationOptions?: ValidationOption
             // pass or fail the alidation based on the result
             return !Boolean(data.length)
           } catch(e) {
-            console.log(e)
             return false
           }
         }

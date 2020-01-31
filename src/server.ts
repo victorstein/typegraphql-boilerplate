@@ -12,6 +12,7 @@ import setup from './utils/setup'
 import { cyan, red, gray } from 'chalk'
 import queryComplexityEvaluator from './utils/queryComplexityValidator/queryComplexity'
 import Error from './middlewares/errorHandler'
+import cors from 'cors'
 
 // Context service
 const contextService = require('request-context')
@@ -20,7 +21,7 @@ const contextService = require('request-context')
 // console.clear()
 
 // Get the neccesary env variables
-const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;
+const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI, ALLOWED_ORIGINS } = process.env;
 
 (async () => {
   try {
@@ -41,10 +42,16 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;
 
     // Create production basic security
     if (NODE_ENV === 'production') {
-      app.use(json({ limit: '10mb' }))
+      app.use(json({ limit: '2mb' }))
       app.use(enforce.HTTPS({ trustProtoHeader: true }))
       app.use(helmet())
       app.disable('x-powered-by')
+      app.use(cors({ origin: (origin, callback) => {
+        if (ALLOWED_ORIGINS?.includes(origin!)) {
+          callback(null, true)
+        }
+        throw new Error('The origin is not allowed', 500)
+      } }))
     }
 
     // Create database connection

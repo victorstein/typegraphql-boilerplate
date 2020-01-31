@@ -1,6 +1,5 @@
 import { ObjectType, Field, ID } from "type-graphql";
-import { prop, getModelForClass, arrayProp, Ref, plugin, modelOptions } from "@typegoose/typegoose";
-import { Role } from "./role";
+import { prop, getModelForClass, plugin, modelOptions } from "@typegoose/typegoose";
 import paginate from '../utils/reusableSnippets/pagination'
 import { Base } from "./base";
 
@@ -14,9 +13,6 @@ export class Permission extends Base {
   @prop({ required: true, text: true, index: true })
   @Field({ nullable: false })
   name: string
-
-  @arrayProp({ itemsRef: 'Role' })
-  usedByRole: Ref<Role>[]
 
   @prop({ required: false, text: true })
   @Field({ nullable: true })

@@ -15,6 +15,8 @@ import createCRUDResolver from "../globalResolvers/crudBaseResolver"
 import { createFilters } from "../../utils/reusableSnippets";
 import LimitRate from "../../middlewares/rateLimiter";
 import Error from '../../middlewares/errorHandler'
+import updateUserInterface from "./interfaces/updateUserInterface";
+import { mongoose } from "@typegoose/typegoose";
 
 const {
   TOKEN_SECRET,
@@ -56,6 +58,44 @@ export default class userResolvers extends CRUDUser {
   ): User {
     // Return the user collected from the context
     return user
+  }
+
+  @Query(() => Boolean)
+  async resendVerificationEmail (
+    @Args() { email }: requestPasswordResetInterface
+  ): Promise<Boolean> {
+    try {
+      // Look for the user using the email
+      const user = await userModel.findOne({ email })
+
+      // Return error if no user
+      if (!user) { throw new Error('The provided email is invalid', 400) }
+
+      // If the user was found check if is not verified
+      if (user.verified) { throw new Error('User is already verified', 400) }
+
+      // Use jsonwebtoken to create a unique hash with the user info
+      const hash = jwt.sign({ id: user._id }, GLOBAL_SECRET!, { expiresIn: EMAIL_VERIFICATION_EXPIRY })
+
+      // Setup email constructor
+      const emailProvider = new EmailProvider({
+        to: email,
+        subject: 'Verify your account',
+        template: "welcome_email",
+        data: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          hash
+        }
+      })
+
+      // Send Email to validate account
+      await emailProvider.sendEmail()
+
+      return true
+    } catch ({ message, code }) {
+      throw new Error(message, code)
+    }
   }
 
   @Query(() => Token)
@@ -232,22 +272,6 @@ export default class userResolvers extends CRUDUser {
     }
   }
 
-  @Mutation(() => User)
-  async createAdmin (
-    @Args() { email, password, confirmPassword, firstName, lastName }: createUserInterface
-  ): Promise<User> {
-    try {
-      // Check if the admin role was already created
-      if (await userModel.estimatedDocumentCount() > 0) {
-        throw new Error('Unable to process your request', 400)
-      }
-
-      return createUser({ email, password, confirmPassword, firstName, lastName })
-    } catch ({ message, code }) {
-      throw new Error(message, code)
-    }
-  }
-
   @Mutation(() => Boolean)
   async passwordReset (
     @Args() { password, confirmPassword, hash }: passwordResetInterface
@@ -292,39 +316,60 @@ export default class userResolvers extends CRUDUser {
     }
   }
 
-  @Query(() => Boolean)
-  async resendVerificationEmail (
-    @Args() { email }: requestPasswordResetInterface
-  ): Promise<Boolean> {
+  @Mutation(() => User)
+  @Authorized(['update_user', 'update_all_user'])
+  async updateUser (
+    @Args() { id, firstName, lastName, newPermissions, role }: updateUserInterface,
+    @Ctx() { user, permissions }: any
+  ): Promise<User> {
     try {
-      // Look for the user using the email
-      const user = await userModel.findOne({ email })
+      // create a filter to look for the user and an update object
+      const filter: any = { id: user ? user._id : id }
+      const update: any = {}
 
-      // Return error if no user
-      if (!user) { throw new Error('The provided email is invalid', 400) }
+      // If the petitioner doesnt have the update all permission search if the user created the permission
+      if (!permissions.includes('update_all_users')) {
+        if (id !== user._id) { throw new Error('You do not have enough permissions to permform this action', 403) }
+      }
 
-      // If the user was found check if is not verified
-      if (user.verified) { throw new Error('User is already verified', 400) }
+      // Locate the role
+      const foundUser = await userModel.findOne(filter)
 
-      // Use jsonwebtoken to create a unique hash with the user info
-      const hash = jwt.sign({ id: user._id }, GLOBAL_SECRET!, { expiresIn: EMAIL_VERIFICATION_EXPIRY })
+      // If the user was not found then return error
+      if (!foundUser) { throw new Error('Unable to find a user with the provided Id', 400) }
 
-      // Setup email constructor
-      const emailProvider = new EmailProvider({
-        to: email,
-        subject: 'Verify your account',
-        template: "welcome_email",
-        data: {
-          firstName: user.firstName,
-          lastName: user.lastName,
-          hash
+      // If the user exits update the neccesary data
+      if (firstName) { update.firstName = firstName }
+      if (lastName) { update.lastName = lastName }
+
+      // Check if the permissions are to be updated and validate them agains the db
+      if (newPermissions.length) {
+        const foundPermissions = await permissionModel.find({ _id: { $in: newPermissions } }, { _id: 1 })
+
+        // If a permission is not found return error
+        if (foundPermissions.length !== newPermissions.length) {
+          throw new Error('You provided one or more invalid permission', 400)
         }
-      })
 
-      // Send Email to validate account
-      await emailProvider.sendEmail()
+        // Inset the data in the permissions
+        update.permissions = newPermissions.map(u => mongoose.Types.ObjectId(u))
+      }
 
-      return true
+      // Check if the role is to be updated
+      if (role) {
+        const foundRole = await roleModel.findById(role)
+
+        // If the role was not found return error
+        if (!foundRole) { throw new Error('You provided an invalid role', 400) }
+
+        update.role = role
+      }
+
+      // asssign all the data to the user
+      user.set(update)
+
+      // save and return the data
+      return user.save()
     } catch ({ message, code }) {
       throw new Error(message, code)
     }
@@ -359,9 +404,11 @@ export default class userResolvers extends CRUDUser {
     @Root() root:any
   ): Promise<Permission[]> {
     try {
+      const  role = await roleModel.findById(root.role, { permissions: 1, _id: 0 })
+
       const permissions = await permissionModel.find({
         $or: [
-          { usedByRole: root.role },
+          { _id: { $in: role?.permissions } },
           { _id: { $in: root.permissions } }
         ]
       })

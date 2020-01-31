@@ -29,9 +29,6 @@ export default async (): Promise<void> => {
       console.log(greenBright('Base roles already created. No new roles created.'))
     }
 
-    // Get the admin role
-    const adminRole = defaultRoles.find(u => u.usedFor === 'adminRole')
-
     console.log(blue('Checking if any new permissions are needed...'))
     // Get the permissions of all the models
     const permissions: string[] = Object.keys(mongoose.models).reduce((x: string[], u) => {
@@ -40,7 +37,9 @@ export default async (): Promise<void> => {
       x.push(`read_${u}s`)
       x.push(`read_all_${u}s`)
       x.push(`update_${u}s`)
+      x.push(`update_all_${u}s`)
       x.push(`delete_${u}s`)
+      x.push(`delete_all_${u}s`)
       return x
     }, [])
 
@@ -63,12 +62,14 @@ export default async (): Promise<void> => {
       console.log(red('New permissions need to be created! Creating the following permissions and adding them to the adminRole: '))
       console.log(greenBright(newPermissions.toString().replace(/,/g, '\n')))
 
-      await permissionModel.create(
+      const permissions = await permissionModel.create(
         newPermissions.map(u => ({
-            name: u,
-            usedByRole: mongoose.Types.ObjectId(adminRole!._id)
+            name: u
         })
       ))
+
+      // Once all the permissions were created add them to the adminRole
+      await roleModel.findOneAndUpdate({ usedFor: 'adminRole' }, { $push: { permissions } })
       console.log(blue('Done! starting the server.'))
     } else {
       console.log(greenBright('No extra permissions created, everything is up to date.'))

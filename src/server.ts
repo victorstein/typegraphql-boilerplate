@@ -52,7 +52,8 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI } = process.env;
       useNewUrlParser: true,
       dbName: 'forge',
       useUnifiedTopology: true,
-      useCreateIndex: true
+      useCreateIndex: true,
+      useFindAndModify: false
     })
 
     // Once connection was stablished procced to run the setup

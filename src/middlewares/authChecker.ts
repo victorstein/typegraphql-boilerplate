@@ -70,6 +70,7 @@ const authChecker:AuthChecker<any> = async ({ context }, permissions): Promise<b
     context.permissions = userPermissions
     return true
   } catch ({ message, code }) {
+    if (message === 'jwt expired') { code = 401 }
     throw new Error(message, code)
   }
 }

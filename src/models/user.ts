@@ -25,14 +25,11 @@ const { GLOBAL_SECRET, EMAIL_VERIFICATION_EXPIRY } = process.env
     const adminRole = await roleModel.findOne({ usedFor: 'adminRole' }, { id: 1 })
     const baseRole = await roleModel.findOne({ usedFor: 'baseRole' }, { id: 1 })
 
-    // Check that these roles exists
-    if (!adminRole || !baseRole) { throw new Error('Server Error', 500) }
-
     // Assign the admin role if is the first user on the DB
     if (await userModel.estimatedDocumentCount() > 0) {
-      this.role = mongoose.Types.ObjectId(baseRole._id)
+      this.role = mongoose.Types.ObjectId(baseRole!._id)
     } else {
-      this.role = mongoose.Types.ObjectId(adminRole._id)
+      this.role = mongoose.Types.ObjectId(adminRole!._id)
     }
   }
 

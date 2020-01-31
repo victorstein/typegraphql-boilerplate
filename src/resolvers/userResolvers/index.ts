@@ -99,7 +99,6 @@ export default class userResolvers extends CRUDUser {
   }
 
   @Query(() => Token)
-  @LimitRate('login', 30)
   async login (
     @Args() { email, password }: loginInterface
   ): Promise<Token> {
@@ -257,6 +256,7 @@ export default class userResolvers extends CRUDUser {
   }
 
   @Mutation(() => User)
+  @LimitRate('login', 30)
   async signUp(
     @Args() { email, password, confirmPassword, firstName, lastName }: createUserInterface
   ): Promise<User> {

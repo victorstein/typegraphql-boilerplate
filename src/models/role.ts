@@ -1,7 +1,8 @@
 import { ObjectType, Field, ID } from "type-graphql";
-import { prop, getModelForClass, pre, plugin, modelOptions } from "@typegoose/typegoose";
+import { prop, getModelForClass, pre, plugin, modelOptions, Ref, arrayProp } from "@typegoose/typegoose";
 import paginate from '../utils/reusableSnippets/pagination'
 import { Base } from "./base";
+import { Permission } from "./permission";
 
 // ENSURE THAT WE ARE NOT DELETEING BASE ROLES
 @pre<Role>('remove', function(next) {
@@ -27,6 +28,10 @@ export class Role extends Base {
   @prop({ required: false })
   @Field({ nullable: true })
   description: string
+
+  @arrayProp({ itemsRef: 'Permission' })
+  @Field(() => [Permission], { nullable: true })
+  permissions: Ref<Permission>[]
 
   @prop({ required: false, enum: [undefined, 'adminRole', 'baseRole'] })
   usedFor: string

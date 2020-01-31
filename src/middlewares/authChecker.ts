@@ -4,11 +4,16 @@ import 'dotenv/config'
 import { userModel } from "../models/user"
 import { permissionModel } from "../models/permission"
 import Error from './errorHandler'
+import { roleModel } from "../models/role"
 
 var contextService = require('request-context');
 
 const authChecker:AuthChecker<any> = async ({ context }, permissions): Promise<boolean> => {
   try {
+    const userCount = await userModel.estimatedDocumentCount()
+    
+    if (userCount < 1) { return true }
+
     // Get headers from context
     let headers = context.req.headers
 
@@ -30,15 +35,18 @@ const authChecker:AuthChecker<any> = async ({ context }, permissions): Promise<b
     // Insert the user in the express context
     contextService.set('req:user', user)
 
-    // Stablish default user permissions
+    // user permissions
     let userPermissions: string[] = []
 
     // Check if there is any role requirement
     if(permissions.length) {
+      // Get the role permissions
+      let rolePermissions = await roleModel.findById(user.role, { permissions: 1 })
+
       // Get all the paremissions associated to the role and any additional permissions
       let allPermissions = await permissionModel.find({
         $or: [
-          { usedByRole: user.role },
+          { _id: { $in: rolePermissions?.permissions } },
           { _id: { $in: user.permissions } }
         ]
       }, { _id: 0, name: 1 })

@@ -34,14 +34,18 @@ export default async (): Promise<void> => {
     const permissions: string[] = Object.keys(mongoose.models).reduce((x: string[], u) => {
       u = u.toLowerCase()
       x.push(`create_${u}s`)
-      x.push(`read_${u}s`)
       x.push(`read_all_${u}s`)
-      x.push(`update_${u}s`)
       x.push(`update_all_${u}s`)
-      x.push(`delete_${u}s`)
       x.push(`delete_all_${u}s`)
       return x
     }, [])
+
+    // Create basic permissions for owned content
+    const basePermissions = [
+      'update_owned',
+      'read_owned',
+      'delete_owned'
+    ]
 
     // Check if all the default permissions exist
     let existingPermissions = await permissionModel.aggregate([
@@ -49,15 +53,25 @@ export default async (): Promise<void> => {
       { $project: { name: 1, _id: 0 } }
     ])
 
+    let existingBasePermissions = await permissionModel.aggregate([
+      { $match: { name: { $in: basePermissions } } },
+      { $project: { name: 1, _id: 0 } }
+    ])
+
     // Transform it to string array for ease of use
     existingPermissions = existingPermissions.map(({ name }) => name)
+    existingBasePermissions = existingBasePermissions.map(({ name }) => name)
 
     // Check existing permissions against all models permissions
     const newPermissions = permissions.filter(u => {
       return !existingPermissions.includes(u)
     })
 
-    // Create missing roles
+    const newBasePermissions = basePermissions.filter(u => {
+      return !existingBasePermissions.includes(u)
+    })
+
+    // Create missing roles into admin role
     if (newPermissions.length) {
       console.log(red('New permissions need to be created! Creating the following permissions and adding them to the adminRole: '))
       console.log(greenBright(newPermissions.toString().replace(/,/g, '\n')))
@@ -69,11 +83,40 @@ export default async (): Promise<void> => {
       ))
 
       // Once all the permissions were created add them to the adminRole
-      await roleModel.findOneAndUpdate({ usedFor: 'adminRole' }, { $push: { permissions } })
-      console.log(blue('Done! starting the server.'))
-    } else {
-      console.log(greenBright('No extra permissions created, everything is up to date.'))
+      await roleModel
+        .findOneAndUpdate(
+          { usedFor: 'adminRole' },
+          { $push: { permissions: [...permissions] } }
+        )
     }
+    
+    // Create missing roles into base role
+    if (newBasePermissions.length) {
+      console.log(red('New Base permissions need to be created! Creating the following permissions and adding them to the baseRole: '))
+      console.log(greenBright(newBasePermissions.toString().replace(/,/g, '\n')))
+
+      const basePermissions = await permissionModel.create(
+        newBasePermissions.map(u => ({
+            name: u
+        })
+      ))
+
+      // Add the base permission to the base
+      await roleModel
+      .findOneAndUpdate(
+        { usedFor: 'baseRole' },
+        { $push: { permissions: [...basePermissions] } }
+      )
+
+      // Once all the permissions were created add them to the adminRole
+      await roleModel
+      .findOneAndUpdate(
+        { usedFor: 'adminRole' },
+        { $push: { permissions: [...basePermissions] } }
+      )
+    }
+   
+    console.log(blue('Done! starting the server.'))
   } catch (e) {
     throw new Error(e)
   }

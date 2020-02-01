@@ -42,9 +42,9 @@ const CRUDUser = createCRUDResolver({
   allowedSearchCriterias: textIndexes,
   allowedSortCriterias: regularIndexes,
   permissions: {
-    findById: [`read_all_${resolverName}s`, `read_${resolverName}s`],
-    readAll: [`read_all_${resolverName}s`, `read_${resolverName}s`],
-    deleteById: [`delete_${resolverName}s`]
+    findById: [`read_all_${resolverName}s`],
+    readAll: [`read_all_${resolverName}s`],
+    deleteById: [`delete_all_${resolverName}s`]
   }
 })
 
@@ -317,7 +317,7 @@ export default class userResolvers extends CRUDUser {
   }
 
   @Mutation(() => User)
-  @Authorized(['update_user', 'update_all_user'])
+  @Authorized(['update_all_user'])
   async updateUser (
     @Args() { id, firstName, lastName, newPermissions, role }: updateUserInterface,
     @Ctx() { user, permissions }: any

@@ -1,4 +1,3 @@
-import { AuthChecker } from "type-graphql"
 import jwt from 'jsonwebtoken'
 import 'dotenv/config'
 import { userModel } from "../models/user"
@@ -8,8 +7,20 @@ import { roleModel } from "../models/role"
 
 var contextService = require('request-context');
 
-const authChecker:AuthChecker<any> = async ({ context }, permissions): Promise<boolean> => {
+type options = {
+  strict: boolean
+}
+
+const authChecker:any = async (
+  { context }: any,
+  permissions: string[],
+  options: options = {
+    strict: true
+  }
+): Promise<boolean> => {
   try {
+    const { strict } = options
+
     const userCount = await userModel.estimatedDocumentCount()
     
     if (userCount < 1) { return true }
@@ -54,10 +65,17 @@ const authChecker:AuthChecker<any> = async ({ context }, permissions): Promise<b
       // transform the result in to a array of strings
       userPermissions = allPermissions.map((u: any) => u.name)
 
-      // Check if the required permission exits in the user permissions
-      if (!permissions.some((u: string) => userPermissions.includes(u))) {
-        throw new Error('Insufficient permissions for this query', 403)
-      }      
+      if (strict) {
+        // Check if the required permission exits in the user permissions
+        if (!permissions.every((u: string) => userPermissions.includes(u))) {
+          throw new Error('Insufficient permissions for this query', 403)
+        }  
+      } else {
+        // Check if the required permission exits in the user permissions
+        if (!permissions.some((u: string) => userPermissions.includes(u))) {
+          throw new Error('Insufficient permissions for this query', 403)
+        }  
+      }
     }
 
     // Once permission were verified proceed to check token version

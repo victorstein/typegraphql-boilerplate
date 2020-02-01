@@ -1,11 +1,11 @@
-import { Mutation, Resolver, Args, Authorized, Ctx } from "type-graphql"
+import { Mutation, Resolver, Args, Authorized, Ctx, FieldResolver, Root } from "type-graphql"
 import { Role, roleModel } from "../../models/role"
 import createRoleInterface from './interfaces/createRoleInterface'
 import createCRUDResolver from "../globalResolvers/crudBaseResolver"
 import { createFilters } from "../../utils/reusableSnippets"
 import Error from '../../middlewares/errorHandler'
 import updateRoleInterface from "./interfaces/updateRoleInterface"
-import { permissionModel } from "../../models/permission"
+import { permissionModel, Permission } from "../../models/permission"
 import { mongoose } from "@typegoose/typegoose"
 
 // Define the prefix of the resolvers
@@ -22,9 +22,9 @@ const CRUDRole = createCRUDResolver({
   allowedSearchCriterias: textIndexes,
   allowedSortCriterias: regularIndexes,
   permissions: {
-    findById: [`read_all_${resolverName}s`, `read_${resolverName}s`],
-    readAll: [`read_all_${resolverName}s`, `read_${resolverName}s`],
-    deleteById: [`delete_${resolverName}s`]
+    findById: [`read_all_${resolverName}s`],
+    readAll: [`read_all_${resolverName}s`],
+    deleteById: [`delete_all_${resolverName}s`]
   }
 })
 
@@ -46,7 +46,7 @@ export default class roleResolvers extends CRUDRole {
   }
 
   @Mutation(() => Role)
-  @Authorized(['update_roles', 'update_all_roles'])
+  @Authorized(['update_all_roles'])
   async updateRole (
     @Args() { id, name, description, newPermissions }: updateRoleInterface,
     @Ctx() { permissions, user }: any
@@ -90,6 +90,23 @@ export default class roleResolvers extends CRUDRole {
       // save and return the role witht he corresponding changes
       return role.save()
     } catch ({ message, code }) {
+      throw new Error(message, code)
+    }
+  }
+
+  @FieldResolver(() => [Permission])
+  async permissions (
+    @Root() root:any
+  ): Promise<Permission[]> {
+    try {
+      // Look for the role
+      const permission = await permissionModel.find({ _id: { $in: root.permissions } })
+
+      // If theres no role throw error (users should always have a role)
+      if (!permission) { throw new Error('There was an error while processing your request', 400) }
+
+      return permission
+    } catch({ message, code }) {
       throw new Error(message, code)
     }
   }

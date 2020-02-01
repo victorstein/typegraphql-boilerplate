@@ -317,7 +317,7 @@ export default class userResolvers extends CRUDUser {
   }
 
   @Mutation(() => User)
-  @Authorized(['update_all_user'])
+  @Authorized(['update_all_user', 'update_owned'])
   async updateUser (
     @Args() { id, firstName, lastName, newPermissions, role }: updateUserInterface,
     @Ctx() { user, permissions }: any

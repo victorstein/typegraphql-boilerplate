@@ -22,9 +22,9 @@ const CRUDRole = createCRUDResolver({
   allowedSearchCriterias: textIndexes,
   allowedSortCriterias: regularIndexes,
   permissions: {
-    findById: [`read_all_${resolverName}s`],
-    readAll: [`read_all_${resolverName}s`],
-    deleteById: [`delete_all_${resolverName}s`]
+    findById: [`read_all_${resolverName}s`, 'read_owned'],
+    readAll: [`read_all_${resolverName}s`, 'read_owned'],
+    deleteById: [`delete_all_${resolverName}s`, 'delete_owned']
   }
 })
 

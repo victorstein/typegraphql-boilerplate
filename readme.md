@@ -35,11 +35,12 @@ GLOBAL_SECRET = string (globalsecret)
 EMAIL_VERIFICATION_EXPIRY = string (1w)
 PASSWORD_RESET_REQUEST_EXPIRY = string (1d)
 OFFENSE_EXPIRY = string (1m | 1h | 1d | 1w | 1y)[n]
+ALLOWED_ORIGINS = string[] ('http://localhost:3000')
 ```
 
 * Finally, just run ```npm run dev``` for development, or ```npm run build``` for webpack, or ```npm start``` (once built) to run production
 
-* I you want to quick run the api for development (no type checking) you may user the command ```npm run fast-dev```
+* I you want to quickly run the API for development (no type checking) you may user the command ```npm run fast-dev```
 
 ## Contributing
 

@@ -20,9 +20,9 @@ const CRUDPermission = createCRUDResolver({
   allowedSearchCriterias: textIndexes,
   allowedSortCriterias: regularIndexes,
   permissions: {
-    findById: [`read_all_${resolverName}s`, `read_${resolverName}s`],
-    readAll: [`read_all_${resolverName}s`, `read_${resolverName}s`],
-    deleteById: [`delete_${resolverName}s`]
+    findById: [`read_all_${resolverName}s`],
+    readAll: [`read_all_${resolverName}s`],
+    deleteById: [`delete_all_${resolverName}s`]
   }
 })
 
@@ -41,7 +41,7 @@ export default class permissionResolvers extends CRUDPermission {
   }
  
   @Mutation(() => Permission)
-  @Authorized(['update_permissions', 'update_all_permissions'])
+  @Authorized(['update_all_permissions'])
   async updatePermission (
     @Args() { id, name, description }: updatePermissionsInterface,
     @Ctx() { permissions, user }: any

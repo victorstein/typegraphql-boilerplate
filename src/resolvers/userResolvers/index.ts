@@ -317,14 +317,14 @@ export default class userResolvers extends CRUDUser {
   }
 
   @Mutation(() => User)
-  @Authorized(['update_all_user', 'update_owned'])
+  @Authorized(['update_all_users', 'update_owned'])
   async updateUser (
     @Args() { id, firstName, lastName, newPermissions, role }: updateUserInterface,
     @Ctx() { user, permissions }: any
   ): Promise<User> {
     try {
       // create a filter to look for the user and an update object
-      const filter: any = { id: user ? user._id : id }
+      const filter: any = { _id: id ? id : user._id }
       const update: any = {}
 
       // If the petitioner doesnt have the update all permission search if the user created the permission
@@ -362,14 +362,14 @@ export default class userResolvers extends CRUDUser {
         // If the role was not found return error
         if (!foundRole) { throw new Error('You provided an invalid role', 400) }
 
-        update.role = role
+        update.role = mongoose.Types.ObjectId(role)
       }
 
       // asssign all the data to the user
-      user.set(update)
+      foundUser.set(update)
 
       // save and return the data
-      return user.save()
+      return foundUser.save()
     } catch ({ message, code }) {
       throw new Error(message, code)
     }

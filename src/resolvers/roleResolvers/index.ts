@@ -53,7 +53,7 @@ export default class roleResolvers extends CRUDRole {
   ): Promise<Role> {
     try {
       // create a filter to look for the role and an update object
-      const filter: any = { id }
+      const filter: any = { _id: id }
       const update: any = {}
 
       // If the petitioner doesnt have the update all permission search if the user created the permission

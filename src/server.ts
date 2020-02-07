@@ -47,8 +47,8 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI, ALLOWED_ORIGINS } = process.en
       app.use(helmet())
       app.disable('x-powered-by')
       app.use(cors({ origin: (origin, callback) => {
-        if (ALLOWED_ORIGINS?.includes(origin!)) {
-          callback(null, true)
+        if (JSON.parse(ALLOWED_ORIGINS!).includes(origin!) || origin === undefined) {
+          return callback(null, true)
         }
         throw new Error('The origin is not allowed', 500)
       } }))
@@ -86,8 +86,10 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI, ALLOWED_ORIGINS } = process.en
         if (message.includes('argument validation error')) {
           const error = err.extensions!.exception.validationErrors.map((u: any) => u.constraints)
           err.message = error.map((u : any) => Object.values(u))
+          err.extensions!.code = 'BAD_REQUEST'
         } else if (message.includes('invalid signature') || message.includes('invalid token')) {
           err.message = 'Invalid request'
+          err.extensions!.code = 'UNAUTHENTICATED'
         }
 
         console.log(red(err.message), gray(err.extensions?.code))

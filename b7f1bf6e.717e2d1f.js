@@ -1,0 +1,1 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[20],{144:function(a){a.exports=JSON.parse('{"allTagsPath":"/typegraphql-boilerplate/blog/tags","slug":"facebook","name":"facebook","count":1,"permalink":"/typegraphql-boilerplate/blog/tags/facebook"}')}}]);

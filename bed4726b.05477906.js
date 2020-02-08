@@ -1,0 +1,1 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[22],{146:function(a){a.exports=JSON.parse('{"allTagsPath":"/typegraphql-boilerplate/blog/tags","slug":"docusaurus","name":"docusaurus","count":3,"permalink":"/typegraphql-boilerplate/blog/tags/docusaurus"}')}}]);

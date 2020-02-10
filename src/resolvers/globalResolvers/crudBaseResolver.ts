@@ -147,7 +147,7 @@ function createCRUDResolver<T extends ClassType>({
     async createdBy (
       @Root() root: any
     ) {
-      if (validator.isMongoId(root.createdBy)) {
+      if (validator.isMongoId(String(root.createdBy))) {
         return userModel.findById(root.createdBy)
       }
       return root.createdBy
@@ -157,7 +157,7 @@ function createCRUDResolver<T extends ClassType>({
     async lastUpdatedBy (
       @Root() root: any
     ) {
-      if (validator.isMongoId(root.lastUpdatedBy)) {
+      if (validator.isMongoId(String(root.lastUpdatedBy))) {
         return userModel.findById(root.lastUpdatedBy)
       }
       return root.lastUpdatedBy

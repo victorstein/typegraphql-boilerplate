@@ -17,7 +17,7 @@ export function areMongoIds(validationOptions?: ValidationOptions) {
         validate(ids: string[]) {
           try {
             // If there are no Ids to validate fail the validation
-            if (!ids.length) { return false }
+            if (!ids.length) { return true }
             
             // Ensure that they are all valid mongo Ids
             const validator = new Validator()

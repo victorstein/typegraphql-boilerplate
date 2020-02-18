@@ -353,6 +353,8 @@ export default class userResolvers extends CRUDUser {
 
         // Inset the data in the permissions
         update.permissions = newPermissions.map(u => mongoose.Types.ObjectId(u))
+      } else if (!newPermissions.length && newPermissions !== undefined) {
+        await userModel.findOneAndUpdate(filter, { $set: { permissions: [] } })
       }
 
       // Check if the role is to be updated

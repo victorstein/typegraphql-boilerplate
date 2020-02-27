@@ -1,3 +1,5 @@
+import mongoose from 'mongoose'
+import { isMongoId } from '.'
 
 interface paginateOutput {
   docs: any[]
@@ -6,7 +8,6 @@ interface paginateOutput {
   page: number
   pages: number
 }
-
 interface paginationOptions {
   select: any,
   sort: any,
@@ -29,10 +30,18 @@ async function paginate (this: any,
   // Parse the query coming from the query
   const parsedQuery = JSON.parse(JSON.stringify(query))
 
+  // Get the schema paths of the model
+  const paths = this.schema.paths
+
+
   if (query.length) {
     // Construct the query
     query = parsedQuery.reduce((x: any, u: any) => {
-      x[u.field] = new RegExp(`${u.value}`, 'i')
+      if (paths[u.field]['instance'] === 'ObjectID' && isMongoId(u.value)) {
+        x[u.field] = mongoose.Types.ObjectId(u.value)
+      } else {
+        x[u.field] = new RegExp(`${u.value}`, 'i')
+      }
       return x
     }, {})
   } else {

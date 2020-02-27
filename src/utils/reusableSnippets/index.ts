@@ -2,7 +2,7 @@ import { User, userModel } from "../../models/user"
 import { registerEnumType } from "type-graphql"
 import { Model } from "mongoose"
 import Error from '../../middlewares/errorHandler'
-
+import { Validator } from "class-validator";
 interface createUser {
   email: string,
   password: string,
@@ -89,4 +89,10 @@ export const createFilters = (model: Model<any, {}>, resolverName: string) => {
 export const capitalize = (s: string) => {
   if (typeof s !== 'string') return ''
   return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+export const isMongoId = (id: string) => {
+  const validator = new Validator()
+  console.log(validator.isMongoId(id))
+  return validator.isMongoId(id)
 }

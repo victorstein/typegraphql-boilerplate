@@ -39,8 +39,10 @@ async function paginate (this: any,
     query = parsedQuery.reduce((x: any, u: any) => {
       if (paths[u.field]['instance'] === 'ObjectID' && isMongoId(u.value)) {
         x[u.field] = mongoose.Types.ObjectId(u.value)
-      } else {
+      } else if (paths[u.field]['instance'] === 'String') {
         x[u.field] = new RegExp(`${u.value}`, 'i')
+      } else {
+        x[u.field] = u.value
       }
       return x
     }, {})

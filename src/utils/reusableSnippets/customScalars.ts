@@ -1,18 +1,18 @@
 import { GraphQLScalarType, Kind } from "graphql";
 
-export const intOrStringScalar = new GraphQLScalarType({
-  name: "IntOrStr",
-  description: "A custom scalar that accepts int or string values",
+export const intOrStringOrBoolScalar = new GraphQLScalarType({
+  name: "IntOrStrOrBool",
+  description: "A custom scalar that accepts int, string or boolean values",
   parseValue(value: string | number) {
-    return value // value from the client input variables
+    return value; // value from the client input variables
   },
   serialize(value: string | number) {
     return value; // value sent to the client
   },
   parseLiteral(ast) {
-    if (ast.kind === Kind.STRING || ast.kind === Kind.INT) {
+    if (ast.kind === Kind.STRING || ast.kind === Kind.INT || ast.kind === Kind.BOOLEAN) {
       return ast.value;
     }
-    return null;
-  },
+    return undefined
+  }
 });

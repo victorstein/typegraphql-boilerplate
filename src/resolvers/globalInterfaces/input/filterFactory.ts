@@ -1,5 +1,5 @@
 import { InputType, Field, EnumResolver, registerEnumType } from "type-graphql";
-import { intOrStringScalar } from "../../../utils/reusableSnippets/customScalars";
+import { intOrStringOrBoolScalar } from "../../../utils/reusableSnippets/customScalars";
 
 enum direction {
   ASCENDING = 1,
@@ -14,11 +14,11 @@ export function createDynamicFilterType(
 ) {
     @InputType(`${prefix}Filter`)
     class Filter {
-      @Field(() => allowedSearchCriterias, { nullable: false })
+      @Field(() => allowedSearchCriterias.enum, { nullable: false })
       field: EnumResolver
     
-      @Field(() => intOrStringScalar, { nullable: false })
-      value: string | number
+      @Field(() => intOrStringOrBoolScalar, { nullable: false })
+      value: string | number | boolean
     }
 
     return Filter

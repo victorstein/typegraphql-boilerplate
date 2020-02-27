@@ -15,9 +15,10 @@ const queryComplexityEvaluator = (request: any, document: any, schema: any) => {
     ],
   });
 
-  if (complexity > 20) {
+  if (complexity > Number(process.env.QUERY_COMPLEXITY!)) {
     throw new Error(
-      `The complexity of the query exeeds the server allowed quota. Please contact the server admin.`, 413
+      `The complexity of the query exeeds the server allowed quota. Please contact the server admin. Requested quota ${complexity}`,
+      413
     );
   }
 }

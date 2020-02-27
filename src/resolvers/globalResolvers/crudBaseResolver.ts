@@ -1,14 +1,11 @@
 import { ClassType, Resolver, Query, Args, Mutation, Authorized, EnumResolver, FieldResolver, Root, Ctx } from "type-graphql";
 import byIdInterface from "../globalInterfaces/input/byIdInterface";
 import { userModel, User } from "../../models/user";
-import { capitalize } from "../../utils/reusableSnippets";
+import { capitalize, isMongoId } from "../../utils/reusableSnippets";
 import { createDynamicFilterType, createDynamicSortType } from "../globalInterfaces/input/filterFactory";
 import createDynamicPaginationInterface from "../globalInterfaces/input/paginationFactory";
 import createPaginationOutput from "../globalInterfaces/output/pagintationOutput";
-import { Validator } from "class-validator";
 import Error from '../../middlewares/errorHandler'
-
-const validator = new Validator()
 
 interface permissionType {
   findById: string[],
@@ -147,7 +144,7 @@ function createCRUDResolver<T extends ClassType>({
     async createdBy (
       @Root() root: any
     ) {
-      if (validator.isMongoId(String(root.createdBy))) {
+      if (isMongoId(String(root.createdBy))) {
         return userModel.findById(root.createdBy)
       }
       return root.createdBy
@@ -157,7 +154,7 @@ function createCRUDResolver<T extends ClassType>({
     async lastUpdatedBy (
       @Root() root: any
     ) {
-      if (validator.isMongoId(String(root.lastUpdatedBy))) {
+      if (isMongoId(String(root.lastUpdatedBy))) {
         return userModel.findById(root.lastUpdatedBy)
       }
       return root.lastUpdatedBy

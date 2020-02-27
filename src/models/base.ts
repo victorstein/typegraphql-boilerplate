@@ -60,11 +60,11 @@ export class Base {
   @Field({ nullable: false })
   updatedAt: string
 
-  @prop({ required: true, ref: 'User'  })
+  @prop({ required: true, ref: 'User', text: true })
   @Field(() => User, { nullable: false })
   createdBy: Ref<User>
 
-  @prop({ required: true, ref: 'User' })
+  @prop({ required: true, ref: 'User', text: true })
   @Field(() => User, { nullable: false })
   lastUpdatedBy: Ref<User>
 }

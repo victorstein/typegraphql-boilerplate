@@ -61,18 +61,23 @@ export const createFilters = (model: Model<any, {}>, resolverName: string) => {
   // Get all the text and regular indexes
   const indexes = Object.entries(modelData.paths).reduce((x: any, u: any) => {
     const { options } = u[1]
+
     if (options.text) {
-      x.textIndexes[u[0].toUpperCase()] = u[0]
+      x.textIndexes.types[u[0].toUpperCase()] = u[1].instance.toLowerCase()
+      x.textIndexes.enum[u[0].toUpperCase()] = u[0]
     }
     if (options.index) {
       x.regularIndexes[u[0].toUpperCase()] = u[0]
     }
     return x
   }, {
-    textIndexes: {},
+    textIndexes: {
+      enum: {},
+      types: {}
+    },
     regularIndexes: {}
   })
-  
+
   // Register regularIndexes enum type with graphql
   if (Object.keys(indexes.regularIndexes).length) {
     registerEnumType(indexes.regularIndexes, { name: `${resolverName}SortType` })
@@ -80,7 +85,7 @@ export const createFilters = (model: Model<any, {}>, resolverName: string) => {
 
   // Register textIndexes enum type with graphql
   if (Object.keys(indexes.textIndexes).length) {
-    registerEnumType(indexes.textIndexes, { name: `${resolverName}FilterType` })
+    registerEnumType(indexes.textIndexes.enum, { name: `${resolverName}FilterType` })
   }
 
   return indexes

@@ -36,6 +36,7 @@ EMAIL_VERIFICATION_EXPIRY = string (1w)
 PASSWORD_RESET_REQUEST_EXPIRY = string (1d)
 OFFENSE_EXPIRY = string (1m | 1h | 1d | 1w | 1y)[n]
 ALLOWED_ORIGINS = string[] ('http://localhost:3000')
+QUERY_COMPLEXITY = int (25)
 ```
 
 * Finally, just run ```npm run dev``` for development, or ```npm run build``` for webpack, or ```npm start``` (once built) to run production

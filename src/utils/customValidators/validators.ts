@@ -1,10 +1,10 @@
 import {
-  Validator,
   registerDecorator,
   ValidationOptions
 } from 'class-validator'
 import { roleModel } from '../../models/role'
 import { permissionModel } from '../../models/permission';
+import { isMongoId } from '../reusableSnippets';
 
 export function areMongoIds(validationOptions?: ValidationOptions) {
   return function (object: Object, propertyName: string) {
@@ -20,8 +20,7 @@ export function areMongoIds(validationOptions?: ValidationOptions) {
             if (!ids.length) { return true }
             
             // Ensure that they are all valid mongo Ids
-            const validator = new Validator()
-            let validIds = ids.every(u => validator.isMongoId(u))
+            let validIds = ids.every(u => isMongoId(u))
 
             // Return the validation results
             return validIds
@@ -48,8 +47,7 @@ export function areValidPermissions(validationOptions?: ValidationOptions) {
             if (!ids.length) { return true }
 
             // Make sure they are all valid mongo IDs
-            const validator = new Validator()
-            let validIds = ids.every(u => validator.isMongoId(u))
+            let validIds = ids.every(u => isMongoId(u))
 
             // If invalid mongo ID then return error
             if (!validIds) { return validIds }

@@ -103,7 +103,7 @@ export class User extends Base {
   @prop({ default: 1 })
   passwordRecoveryVersion: number
 
-  @prop({ default: false })
+  @prop({ default: false, text: true })
   @Field()
   verified: boolean
 }

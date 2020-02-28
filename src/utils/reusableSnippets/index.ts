@@ -3,6 +3,7 @@ import { registerEnumType } from "type-graphql"
 import { Model } from "mongoose"
 import Error from '../../middlewares/errorHandler'
 import { Validator } from "class-validator";
+
 interface createUser {
   email: string,
   password: string,

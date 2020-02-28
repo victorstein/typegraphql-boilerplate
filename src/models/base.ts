@@ -1,26 +1,6 @@
 import { ObjectType, Field } from "type-graphql";
-import { prop, pre, Ref, mongoose } from "@typegoose/typegoose";
+import { prop, pre, Ref } from "@typegoose/typegoose";
 import { User } from "./user";
-
-// create system user
-export const system = {
-  firstName: 'System',
-  lastName: 'System',
-  role: mongoose.Types.ObjectId(),
-  permissions: [],
-  id: '',
-  email: '',
-  password: '',
-  wasNew: false,
-  verified: true,
-  tokenVersion: 1,
-  passwordRecoveryVersion: 1,
-  createdAt: '',
-  updatedAt: '',
-  createdBy: mongoose.Types.ObjectId(),
-  lastUpdatedBy: mongoose.Types.ObjectId()
-}
-
 const contextService = require('request-context');
 
 @pre<Base>('validate', function (next) {
@@ -29,13 +9,13 @@ const contextService = require('request-context');
 
   if (this.isNew) {
     // Set the createdby value
-    this.createdBy = user ? mongoose.Types.ObjectId(user._id) : system
-    this.lastUpdatedBy = user ? mongoose.Types.ObjectId(user._id) : system
+    this.createdBy = user ? user._id : undefined
+    this.lastUpdatedBy = user ? user._id : undefined
     return next()
   }
 
   // If the document is not new then proceed to update the lastUpdatedBy field
-  this.lastUpdatedBy = user ? mongoose.Types.ObjectId(user._id) : system
+  this.lastUpdatedBy = user ? user._id : undefined
 
   return next()
 })
@@ -45,7 +25,7 @@ const contextService = require('request-context');
   const user = contextService.get('req:user')
 
   // If the document is not new then proceed to update the lastUpdatedBy field
-  this.lastUpdatedBy = user ? mongoose.Types.ObjectId(user._id) : system
+  this.lastUpdatedBy = user ? user._id : undefined
 
   return next()
 })
@@ -60,11 +40,11 @@ export class Base {
   @Field({ nullable: false })
   updatedAt: string
 
-  @prop({ required: true, ref: 'User', text: true })
-  @Field(() => User, { nullable: false })
+  @prop({ required: false, ref: 'User', text: true })
+  @Field(() => User, { nullable: true })
   createdBy: Ref<User>
 
-  @prop({ required: true, ref: 'User', text: true })
-  @Field(() => User, { nullable: false })
+  @prop({ required: false, ref: 'User', text: true })
+  @Field(() => User, { nullable: true })
   lastUpdatedBy: Ref<User>
 }

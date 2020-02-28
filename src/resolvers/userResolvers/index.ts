@@ -179,6 +179,7 @@ export default class userResolvers extends CRUDUser {
   }
 
   @Query(() => Boolean)
+  @LimitRate('email_verification', 5)
   async emailVerification(
     @Arg('hash', { nullable: false }) hash: string
   ): Promise<Boolean> {

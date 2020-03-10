@@ -33,12 +33,12 @@ const contextService = require('request-context');
 @ObjectType()
 export class Base {
   @prop()
-  @Field({ nullable: false })
-  createdAt: string
+  @Field(() => Date, { nullable: false })
+  createdAt: Date
 
   @prop()
-  @Field({ nullable: false })
-  updatedAt: string
+  @Field(() => Date, { nullable: false })
+  updatedAt: Date
 
   @prop({ required: false, ref: 'User', text: true })
   @Field(() => User, { nullable: true })

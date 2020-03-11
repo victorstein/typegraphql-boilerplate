@@ -7,14 +7,14 @@ import Error from '.././middlewares/errorHandler'
 import { userModel } from "./user";
 
 // ENSURE THAT WE ARE NOT DELETEING BASE ROLES
-@pre<Role>('remove', function(next) {
+@pre<Role>('remove', async function(next) {
   // Check if this is one of the base roles
   if (this.usedFor) {
     return next(new Error('Unable to delete the requested role'))
   }
 
   // Check if the role is being used
-  const role = userModel.findOne({ role: this._id })
+  const role = await userModel.findOne({ role: this._id })
 
   if (role) {
     return next(new Error('Unable to delete the requested role. It is currentyle assigned to one or more users.'))

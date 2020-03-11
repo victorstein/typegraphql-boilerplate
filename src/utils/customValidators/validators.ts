@@ -50,10 +50,10 @@ export function areValidPermissions(validationOptions?: ValidationOptions) {
             let validIds = ids.every(u => isMongoId(u))
 
             // If invalid mongo ID then return error
-            if (!validIds) { return validIds }
+            if (!validIds) { return false }
 
             // If they are all valid proceed to check that they are all permisssions
-            const permissions = await permissionModel.find({ _id: { '$in': validIds } }, { _id: 1 })
+            const permissions = await permissionModel.find({ _id: { '$in': ids } }, { _id: 1 })
 
             // If not all permissions found, fail the validation
             if (permissions.length !== ids.length) { return false }

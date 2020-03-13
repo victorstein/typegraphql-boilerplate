@@ -244,8 +244,8 @@ export default class userResolvers extends CRUDUser {
 
       // Return true no matter the outcome
       return true
-    } catch ({ message, status = 500 }) {
-      throw new Error(message, status)
+    } catch ({ message, code = 500 }) {
+      throw new Error(message, code)
     }
   }
 

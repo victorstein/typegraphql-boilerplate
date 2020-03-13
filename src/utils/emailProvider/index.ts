@@ -86,9 +86,9 @@ export default class EmailProvider {
       }
 
       this.transporter.sendMail(message, (err: Error, info: any) => {
-        if (err) reject(err)
+        if (err) return reject(err)
         console.log(cyan(JSON.stringify(info)))
-        resolve()
+        return resolve()
       })
     })
   }

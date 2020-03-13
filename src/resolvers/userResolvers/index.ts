@@ -251,7 +251,7 @@ export default class userResolvers extends CRUDUser {
   ): Promise<User> {
     try {
       return createUser({ email, password, confirmPassword, firstName, lastName })
-    } catch ({ message, code }) {
+    } catch ({ message, code = 500 }) {
       throw new Error(message, code)
     }
   }

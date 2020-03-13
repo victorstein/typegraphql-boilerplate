@@ -214,34 +214,39 @@ export default class userResolvers extends CRUDUser {
   }
 
   @Query(() => Boolean)
+  @LimitRate('request_pw_reset', 10)
   async requestPasswordReset (
     @Args() { email }: requestPasswordResetInterface
   ): Promise<Boolean> {
-    // locate the user within the database
-    const user = await userModel.findOne({ email })
+    try {
+      // locate the user within the database
+      const user = await userModel.findOne({ email })
 
-    // If no user end operations and return true
-    if (!user) { return true }
+      // If no user end operations and return true
+      if (!user) { return true }
 
-    // Create a hash that will ensure the user is requesting a pw reset
-    const hash = jwt.sign({
-      id: user._id,
-      version: user.passwordRecoveryVersion
-    }, GLOBAL_SECRET!, { expiresIn: PASSWORD_RESET_REQUEST_EXPIRY })
+      // Create a hash that will ensure the user is requesting a pw reset
+      const hash = jwt.sign({
+        id: user._id,
+        version: user.passwordRecoveryVersion
+      }, GLOBAL_SECRET!, { expiresIn: PASSWORD_RESET_REQUEST_EXPIRY })
 
-    // Setup email constructor
-    const emailProvider = new EmailProvider({
-      template: 'reset_password',
-      subject: 'Password Recovery',
-      to: email,
-      data: { hash, firstName: user.firstName, lastName: user.lastName }
-    })
+      // Setup email constructor
+      const emailProvider = new EmailProvider({
+        template: 'reset_password',
+        subject: 'Password Recovery',
+        to: email,
+        data: { hash, firstName: user.firstName, lastName: user.lastName }
+      })
 
-    // Send Email to validate account
-    await emailProvider.sendEmail()
+      // Send Email to validate account
+      await emailProvider.sendEmail()
 
-    // Return true no matter the outcome
-    return true
+      // Return true no matter the outcome
+      return true
+    } catch ({ message, status = 500 }) {
+      throw new Error(message, status)
+    }
   }
 
   @Mutation(() => User)

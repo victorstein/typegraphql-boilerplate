@@ -4,23 +4,24 @@ import { userModel } from "../models/user"
 import { permissionModel } from "../models/permission"
 import Error from './errorHandler'
 import { roleModel } from "../models/role"
+import { AuthChecker } from 'type-graphql'
 
 var contextService = require('request-context');
 
-type options = {
-  strict: boolean
+export type AuthParams = {
+    permissions?: string[]
+    options?: {
+      strict: boolean
+    }
 }
 
-const authChecker:any = async (
-  { context }: any,
-  permissions: string[],
-  options: options = {
-    strict: true
-  }
-): Promise<boolean> => {
+const authChecker: AuthChecker<any, AuthParams> = async (
+  { context },
+  [data = { permissions: [], options: { strict: false } }] = [],
+) => {
   try {
-    const { strict } = options
-
+    const { options = { strict: false }, permissions = [] } = data
+    const { strict } = options!
     const userCount = await userModel.estimatedDocumentCount()
     
     if (userCount < 1) { return true }
@@ -50,14 +51,14 @@ const authChecker:any = async (
     let userPermissions: string[] = []
 
     // Check if there is any role requirement
-    if(permissions.length) {
+    if(permissions!.length) {
       // Get the role permissions
       let rolePermissions = await roleModel.findById(user.role, { permissions: 1 })
 
       // Get all the paremissions associated to the role and any additional permissions
       let allPermissions = await permissionModel.find({
         $or: [
-          { _id: { $in: rolePermissions?.permissions } },
+          { _id: { $in: rolePermissions!.permissions } },
           { _id: { $in: user.permissions } }
         ]
       }, { _id: 0, name: 1 })
@@ -67,12 +68,12 @@ const authChecker:any = async (
 
       if (strict) {
         // Check if the required permission exits in the user permissions
-        if (!permissions.every((u: string) => userPermissions.includes(u))) {
+        if (!permissions!.every((u: string) => userPermissions.includes(u))) {
           throw new Error('Insufficient permissions for this query', 403)
         }  
       } else {
         // Check if the required permission exits in the user permissions
-        if (!permissions.some((u: string) => userPermissions.includes(u))) {
+        if (!permissions!.some((u: string) => userPermissions.includes(u))) {
           throw new Error('Insufficient permissions for this query', 403)
         }  
       }

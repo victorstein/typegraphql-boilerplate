@@ -28,19 +28,36 @@ async function paginate (this: any,
   let { select, sort, page, perPage } = options
 
   // Parse the query coming from the query
-  const parsedQuery = JSON.parse(JSON.stringify(query))
+  let parsedQuery = JSON.parse(JSON.stringify(query))
 
   // Get the schema paths of the model
   const paths = this.schema.paths
 
+  // Filter unallowed keys
+  parsedQuery = Object
+    .values(parsedQuery[0])
+    .filter((u: any) => typeof u !== 'string')
+    .reduce((x: any, u:any) => { x.push(u[0]); return x }, [])
 
   if (query.length) {
     // Construct the query
     query = parsedQuery.reduce((x: any, u: any) => {
-      if (paths[u.field]['instance'] === 'ObjectID' && isMongoId(u.value)) {
-        x[u.field] = mongoose.Types.ObjectId(u.value)
+      if (paths[u.field]['instance'] === 'ObjectID') {
+        if (Array.isArray(u.value)) {
+          // Check if all the Ids are valid mongoIds
+          if (!u.value.every((u:any) => isMongoId(u.value))) {
+            throw new Error('One or more of the provided Ids is Invalid')
+          }
+          x[u.field] = { $in: u.value.map((u: any) => mongoose.Types.ObjectId(u.value)) }
+        } else {
+          // Check if the id is a valid mongoId
+          if (!isMongoId(u.value)) { throw new Error('The provided Id is Invalid') }
+          x[u.field] = mongoose.Types.ObjectId(u.value)
+        }
       } else if (paths[u.field]['instance'] === 'String') {
         x[u.field] = new RegExp(`${u.value}`, 'i')
+      } else if (paths[u.field]['instance'] === 'Date') {
+        // console.log(u.field, parsedQuery)
       } else {
         x[u.field] = u.value
       }

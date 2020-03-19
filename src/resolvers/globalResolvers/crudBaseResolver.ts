@@ -1,10 +1,10 @@
 import { ClassType, Resolver, Query, Args, Mutation, Authorized, EnumResolver, FieldResolver, Root, Ctx } from "type-graphql";
-import byIdInterface from "../globalInterfaces/input/byIdInterface";
+import byIdInterface from "./interfaces/byIdInterface";
 import { userModel, User } from "../../models/user";
 import { capitalize, isMongoId } from "../../utils/reusableSnippets";
-import { createDynamicFilterType, createDynamicSortType } from "../globalInterfaces/input/filterFactory";
-import createDynamicPaginationInterface from "../globalInterfaces/input/paginationFactory";
-import createPaginationOutput from "../globalInterfaces/output/pagintationOutput";
+import { createDynamicFilterType, createDynamicSortType } from "./interfaces/filterFactory";
+import createDynamicPaginationInterface from "./interfaces/paginationFactory";
+import createPaginationOutput from "./outputTypes/pagintationOutput";
 import Error from '../../middlewares/errorHandler'
 
 interface permissionType {
@@ -51,7 +51,7 @@ function createCRUDResolver<T extends ClassType>({
   let Sort: ClassType | null = null
 
   // Create dynamic filter if needed
-  if (Object.keys(allowedSearchCriterias).length) {
+  if (Object.keys(allowedSearchCriterias.enum).length) {
     Filter = createDynamicFilterType(allowedSearchCriterias, prefix)
   }
 
@@ -72,7 +72,7 @@ function createCRUDResolver<T extends ClassType>({
   abstract class CRUDBaseResolver {
 
     @Query(() => returnType, { name: `${prefix}ById` })
-    @Authorized(findById)
+    @Authorized({ permissions: findById })
     async findById(
       @Args() { id }: byIdInterface,
       @Ctx() { permissions, user }: any
@@ -98,18 +98,19 @@ function createCRUDResolver<T extends ClassType>({
     }
 
     @Query(() => paginationOutput, { name: `${prefix}s`, nullable: true })
-    @Authorized(readAll)
+    @Authorized({ permissions: readAll })
     readAll (
       @Args() { perPage, page, filters = [], sort = [] }: paginationInterface,
       @Ctx() { permissions, user }: any
     ): paginationOutput {
       try {
+        console.log(filters)
         // Check if the user is allowed to see the entity
         if (!permissions.includes(`read_all_${prefix}s`)) {
           // Add filtering to the DB request
-          filters.createdBy = { 'createdBy': user._id }
+          filters.createdBy = user._id
         }
-
+        console.log(filters)
         // If the user is not allowed to see all entities
         // Check if the user created the entity
         return model.paginate(filters, { page, perPage, sort })
@@ -119,7 +120,7 @@ function createCRUDResolver<T extends ClassType>({
     }
 
     @Mutation(() => Boolean, { name: `delete${capitalize(prefix)}ById` })
-    @Authorized(deleteById)
+    @Authorized({ permissions: deleteById })
     async deleteById (
       @Args() { id }: byIdInterface
     ): Promise<boolean> {
@@ -140,7 +141,7 @@ function createCRUDResolver<T extends ClassType>({
       }
     }
 
-    @FieldResolver(() => User, { name: 'createdBy' })
+    @FieldResolver(() => User, { name: 'createdBy', nullable: true })
     async createdBy (
       @Root() root: any
     ) {

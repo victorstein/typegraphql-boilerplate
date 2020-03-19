@@ -1,10 +1,12 @@
 import {
   registerDecorator,
-  ValidationOptions
+  ValidationOptions,
+  ValidationArguments
 } from 'class-validator'
 import { roleModel } from '../../models/role'
 import { permissionModel } from '../../models/permission';
 import { isMongoId } from '../reusableSnippets';
+import moment from 'moment'
 
 export function areMongoIds(validationOptions?: ValidationOptions) {
   return function (object: Object, propertyName: string) {
@@ -97,6 +99,72 @@ export function nameNotTaken(model: models, validationOptions?: ValidationOption
 
             // pass or fail the alidation based on the result
             return !Boolean(data.length)
+          } catch(e) {
+            return false
+          }
+        }
+      }
+    });
+  };
+}
+
+export function IsBefore(validationOptions?: ValidationOptions) {
+  return function (object: Object, propertyName: string) {
+    registerDecorator({
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      constraints: [],
+      validator: {
+        validate(value: Date, args: ValidationArguments) {
+          try {
+            console.log('Esto se esta ejecutando')
+            const to = (args.object as any)['to']
+            return moment(value).isBefore(to)
+          } catch(e) {
+            return false
+          }
+        }
+      }
+    });
+  };
+}
+
+export function IsBeforeOrSame(validationOptions?: ValidationOptions) {
+  return function (object: Object, propertyName: string) {
+    registerDecorator({
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      constraints: [],
+      validator: {
+        validate(value: Date, args: ValidationArguments) {
+          try {
+            console.log('Esto se esta ejecutando')
+            const to = (args.object as any)['to']
+            console.log(value)
+            return moment(value).isSameOrBefore(to)
+          } catch(e) {
+            return false
+          }
+        }
+      }
+    });
+  };
+}
+
+export function IsAfter(validationOptions?: ValidationOptions) {
+  return function (object: Object, propertyName: string) {
+    registerDecorator({
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      constraints: [],
+      validator: {
+        validate(value: Date, args: ValidationArguments) {
+          try {
+            const from = (args.object as any)['from']
+            return moment(value).isAfter(from)
           } catch(e) {
             return false
           }

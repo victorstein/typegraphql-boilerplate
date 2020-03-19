@@ -84,11 +84,6 @@ export const createFilters = (model: Model<any, {}>, resolverName: string) => {
     registerEnumType(indexes.regularIndexes, { name: `${resolverName}SortType` })
   }
 
-  // Register textIndexes enum type with graphql
-  if (Object.keys(indexes.textIndexes).length) {
-    registerEnumType(indexes.textIndexes.enum, { name: `${resolverName}FilterType` })
-  }
-
   return indexes
 }
 
@@ -99,6 +94,13 @@ export const capitalize = (s: string) => {
 
 export const isMongoId = (id: string) => {
   const validator = new Validator()
-  console.log(validator.isMongoId(id))
   return validator.isMongoId(id)
+}
+
+export const isObjectEmpty = (obj: any) => {
+  return Object.keys(obj).length === 0
+}
+
+export const objectIsNotEmpty = (obj: any) => {
+  return Object.keys(obj).length !== 0
 }

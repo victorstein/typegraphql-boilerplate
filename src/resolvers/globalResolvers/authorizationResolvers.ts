@@ -9,6 +9,8 @@ import bcrypt from 'bcryptjs'
 import { User, userModel } from "../../models/user";
 import LimitRate from "../../middlewares/rateLimiter";
 import Error from '../../middlewares/errorHandler'
+import { createUser } from "../../utils/reusableSnippets";
+import createUserInterface from "../userResolvers/interfaces/createUser";
 
 const {
   TOKEN_SECRET,
@@ -106,6 +108,24 @@ export default class AuthorizationResolvers {
       const refreshTokenExpiration = { createdAt: refreshTokenData.iat, expiresAt: refreshTokenData.exp }
 
       return { token, refreshToken, refreshTokenExpiration }
+    } catch ({ message, code }) {
+      throw new Error(message, code)
+    }
+  }
+
+  
+  @Mutation(() => User)
+  @LimitRate('login', 30)
+  async signUp(
+    @Args() { email, password, confirmPassword, firstName, lastName }: createUserInterface
+  ): Promise<User> {
+    try {
+      // Check if the admin role was already created
+      if (await userModel.estimatedDocumentCount() === 0) {
+        throw new Error('Unable to process your request', 400)
+      }
+
+      return createUser({ email, password, confirmPassword, firstName, lastName })
     } catch ({ message, code }) {
       throw new Error(message, code)
     }

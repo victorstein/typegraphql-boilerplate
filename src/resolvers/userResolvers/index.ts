@@ -6,7 +6,6 @@ import { roleModel, Role } from "../../models/role";
 import { createUser } from "../../utils/reusableSnippets";
 import createCRUDResolver from "../globalResolvers/crudBaseResolver"
 import { createFilters } from "../../utils/reusableSnippets";
-import LimitRate from "../../middlewares/rateLimiter";
 import Error from '../../middlewares/errorHandler'
 import updateUserInterface from "./interfaces/updateUserInterface";
 import { mongoose } from "@typegoose/typegoose";
@@ -40,24 +39,7 @@ export default class userResolvers extends CRUDUser {
   ): Promise<User> {
     try {
       return createUser({ email, password, confirmPassword, firstName, lastName })
-    } catch ({ message, code }) {
-      throw new Error(message, code)
-    }
-  }
-
-  @Mutation(() => User)
-  @LimitRate('login', 30)
-  async signUp(
-    @Args() { email, password, confirmPassword, firstName, lastName }: createUserInterface
-  ): Promise<User> {
-    try {
-      // Check if the admin role was already created
-      if (await userModel.estimatedDocumentCount() === 0) {
-        throw new Error('Unable to process your request', 400)
-      }
-
-      return createUser({ email, password, confirmPassword, firstName, lastName })
-    } catch ({ message, code }) {
+    } catch ({ message, code = 500 }) {
       throw new Error(message, code)
     }
   }

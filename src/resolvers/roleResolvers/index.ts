@@ -31,7 +31,7 @@ const CRUDRole = createCRUDResolver({
 @Resolver(() => Role)
 export default class roleResolvers extends CRUDRole {
   @Mutation(() => Role)
-  @Authorized(['create_roles'])
+  @Authorized({ permissions: ['create_roles'] })
   createRole (
     @Args() { name, permissions }: createRoleInterface
   ): Promise<Role> {
@@ -46,7 +46,7 @@ export default class roleResolvers extends CRUDRole {
   }
 
   @Mutation(() => Role)
-  @Authorized(['update_all_roles'])
+  @Authorized({ permissions: ['update_all_roles'] })
   async updateRole (
     @Args() { id, name, description, newPermissions }: updateRoleInterface,
     @Ctx() { permissions, user }: any

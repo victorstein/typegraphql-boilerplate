@@ -32,11 +32,11 @@ const contextService = require('request-context');
 
 @ObjectType()
 export class Base {
-  @prop()
+  @prop({ type: Date, text: true })
   @Field(() => Date, { nullable: false })
   createdAt: Date
 
-  @prop()
+  @prop({ type: Date })
   @Field(() => Date, { nullable: false })
   updatedAt: Date
 

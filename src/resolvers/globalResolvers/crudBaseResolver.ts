@@ -82,7 +82,7 @@ function createCRUDResolver<T extends ClassType>({
 
         // Check if the user is allowed to see the entity
         if (!permissions.includes(`read_all_${prefix}s`)) {
-          filters.createdBy = user._id
+          filters.push({ field: 'createdBy', value: user._id })
         }
 
         // Get the data
@@ -104,13 +104,12 @@ function createCRUDResolver<T extends ClassType>({
       @Ctx() { permissions, user }: any
     ): paginationOutput {
       try {
-        console.log(filters)
         // Check if the user is allowed to see the entity
         if (!permissions.includes(`read_all_${prefix}s`)) {
           // Add filtering to the DB request
-          filters.createdBy = user._id
+          filters.push({ field: 'createdBy', value: user._id })
         }
-        console.log(filters)
+        
         // If the user is not allowed to see all entities
         // Check if the user created the entity
         return model.paginate(filters, { page, perPage, sort })

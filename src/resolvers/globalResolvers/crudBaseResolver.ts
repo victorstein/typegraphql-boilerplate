@@ -82,7 +82,7 @@ function createCRUDResolver<T extends ClassType>({
 
         // Check if the user is allowed to see the entity
         if (!permissions.includes(`read_all_${prefix}s`)) {
-          filters.push({ field: 'createdBy', value: user._id })
+          filters.createdBy = user._id
         }
 
         // Get the data

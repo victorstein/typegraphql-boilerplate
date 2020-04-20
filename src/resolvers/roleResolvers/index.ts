@@ -103,7 +103,7 @@ export default class roleResolvers extends CRUDRole {
       const permission = await permissionModel.find({ _id: { $in: root.permissions } })
 
       // If theres no role throw error (users should always have a role)
-      if (!permission) { throw new Error('There was an error while processing your request', 400) }
+      if (!permission.length) { throw new Error('There was an error while processing your request', 400) }
 
       return permission
     } catch({ message, code }) {

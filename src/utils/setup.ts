@@ -17,7 +17,7 @@ export default async (): Promise<void> => {
       console.log(greenBright(baseRoles.toString().replace(/,/g, '\n')))
       defaultRoles = await roleModel.create([
         {
-          name: 'superAdmin',
+          name: 'Root',
           usedFor: 'adminRole'
         },
         {

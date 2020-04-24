@@ -36,6 +36,18 @@ const { GLOBAL_SECRET, EMAIL_VERIFICATION_EXPIRY } = process.env
   next()
 })
 
+@pre<User>('remove', async function (next) {
+  // Get the role of the user
+  const role = await roleModel.findById(this.role)
+
+  // Check if the user is a root user
+  if (role?.usedFor === 'adminRole') {
+    return next(new Error('The user you are trying to delete is an admin'))
+  }
+
+  next()
+})
+
 @post<User>('save', async function ({ _id, firstName, lastName, email, wasNew }, next): Promise<void> {
   try {
     if (wasNew) {

@@ -35,10 +35,10 @@ export default class userResolvers extends CRUDUser {
   @Mutation(() => User)
   @Authorized({ permissions: 'create_users' })
   createUser(
-    @Args() { email, password, confirmPassword, firstName, lastName }: createUserInterface
+    @Args() { email, password, firstName, lastName }: createUserInterface
   ): Promise<User> {
     try {
-      return createUser({ email, password, confirmPassword, firstName, lastName })
+      return createUser({ email, password, firstName, lastName })
     } catch ({ message, code = 500 }) {
       throw new Error(message, code)
     }

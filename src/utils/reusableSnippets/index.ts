@@ -8,12 +8,11 @@ interface createUser {
   email: string,
   password: string,
   firstName: string,
-  lastName: string,
-  confirmPassword: string
+  lastName: string
 }
 
 export const createUser = (
-  { email, password, firstName, lastName, confirmPassword }: createUser
+  { email, password, firstName, lastName }: createUser
   ): Promise<User> => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -22,11 +21,6 @@ export const createUser = (
 
       // Throw error if user already exists
       if (user) { throw new Error('Unable to process your request with the provided email', 400) }
-
-      // if user does not exist proceed to chech that the passwords match
-      if (password !== confirmPassword) {
-        throw new Error('The passwords do not match', 400)
-      }
 
       // If the passwords match proceed to create the user
       const newUser = await userModel.create({

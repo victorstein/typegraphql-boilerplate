@@ -117,7 +117,7 @@ export default class AuthorizationResolvers {
   @Mutation(() => User)
   @LimitRate('login', 30)
   async signUp(
-    @Args() { email, password, confirmPassword, firstName, lastName }: createUserInterface
+    @Args() { email, password, firstName, lastName }: createUserInterface
   ): Promise<User> {
     try {
       // Check if the admin role was already created
@@ -125,7 +125,7 @@ export default class AuthorizationResolvers {
         throw new Error('Unable to process your request', 400)
       }
 
-      return createUser({ email, password, confirmPassword, firstName, lastName })
+      return createUser({ email, password, firstName, lastName })
     } catch ({ message, code }) {
       throw new Error(message, code)
     }

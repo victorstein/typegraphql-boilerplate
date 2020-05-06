@@ -105,7 +105,7 @@ export class User extends Base {
   @Field(() => Role, { nullable: false })
   role: Ref<Role>
 
-  @arrayProp({ itemsRef: 'Permission' })
+  @arrayProp({ ref: 'Permission' })
   @Field(() => [Permission], { nullable: true })
   permissions: Ref<Permission>[]
 

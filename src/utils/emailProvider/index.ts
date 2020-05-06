@@ -25,6 +25,9 @@ const emailTransport = {
   auth: {
     user: EMAIL_PROVIDER_USER,
     pass: EMAIL_PROVIDER_PASS
+  },
+  tls: {
+    rejectUnauthorized: process.env.NODE_ENV === 'production'
   }
 }
 

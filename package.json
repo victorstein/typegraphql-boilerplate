@@ -32,7 +32,7 @@
   },
   "homepage": "https://github.com/victorstein/gql-forge#readme",
   "dependencies": {
-    "@typegoose/typegoose": "^6.1.8",
+    "@typegoose/typegoose": "^7.0.0",
     "apollo-server-express": "^2.9.14",
     "bcryptjs": "^2.4.3",
     "chalk": "^3.0.0",
@@ -46,7 +46,7 @@
     "helmet": "^3.21.2",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.24.0",
-    "mongoose": "^5.8.3",
+    "mongoose": "^5.9.12",
     "nodemailer": "^6.4.2",
     "reflect-metadata": "^0.1.13",
     "request-context": "^2.0.0",

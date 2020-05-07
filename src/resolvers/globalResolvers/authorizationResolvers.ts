@@ -9,8 +9,40 @@ import bcrypt from 'bcryptjs'
 import { User, userModel } from "../../models/user";
 import LimitRate from "../../middlewares/rateLimiter";
 import Error from '../../middlewares/errorHandler'
-import { createUser } from "../../utils/reusableSnippets";
 import createUserInterface from "../userResolvers/interfaces/createUser";
+
+interface createUser {
+  email: string,
+  password: string,
+  firstName: string,
+  lastName: string
+}
+
+export const createUser = (
+  { email, password, firstName, lastName }: createUser
+  ): Promise<User> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Check if the user exists in the DB
+      const user = await userModel.findOne({ email })
+
+      // Throw error if user already exists
+      if (user) { throw new Error('Unable to process your request with the provided email', 400) }
+
+      // If the passwords match proceed to create the user
+      const newUser = await userModel.create({
+        firstName,
+        lastName,
+        password,
+        email
+      })
+
+      resolve(newUser)
+    } catch(e) {
+      reject(e)
+    }
+  })
+}
 
 const {
   TOKEN_SECRET,

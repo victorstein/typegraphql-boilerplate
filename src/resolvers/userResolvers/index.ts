@@ -3,12 +3,12 @@ import { User, userModel } from "../../models/user";
 import createUserInterface from "./interfaces/createUser";
 import { permissionModel, Permission } from "../../models/permission";
 import { roleModel, Role } from "../../models/role";
-import { createUser } from "../../utils/reusableSnippets";
 import createCRUDResolver from "../globalResolvers/crudBaseResolver"
 import { createFilters } from "../../utils/reusableSnippets";
 import Error from '../../middlewares/errorHandler'
 import updateUserInterface from "./interfaces/updateUserInterface";
 import { mongoose } from "@typegoose/typegoose";
+import { createUser } from "../globalResolvers/authorizationResolvers";
 
 // Define the prefix of the resolvers
 const resolverName = 'User'

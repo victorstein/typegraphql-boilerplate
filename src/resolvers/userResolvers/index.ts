@@ -33,7 +33,7 @@ const CRUDUser = createCRUDResolver({
 @Resolver(() => User)
 export default class userResolvers extends CRUDUser {
   @Mutation(() => User)
-  @Authorized({ permissions: 'create_users' })
+  @Authorized({ permissions: ['create_users'] })
   createUser(
     @Args() { email, password, firstName, lastName }: createUserInterface
   ): Promise<User> {

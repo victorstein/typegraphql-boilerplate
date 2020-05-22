@@ -24,7 +24,11 @@ const authChecker: AuthChecker<any, AuthParams> = async (
     const { strict } = options!
     const userCount = await userModel.estimatedDocumentCount()
     
+    // Dont auth if the first user
     if (userCount < 1) { return true }
+
+    // Check if the public permission is listed
+    if (permissions.includes('public')) { return true }
 
     // Get headers from context
     let headers = context.req.headers

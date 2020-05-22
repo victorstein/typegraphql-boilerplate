@@ -75,11 +75,22 @@ function createCRUDResolver<T extends ClassType>({
     @Authorized({ permissions: findById })
     async findById(
       @Args() { id }: byIdInterface,
-      @Ctx() { permissions, user }: any
+      @Ctx() { permissions = [], user }: any
     ): Promise<T[]> {
       try {
         const filters: any = { _id: id }
 
+        // Check if endpoint is public
+        if (readAll.includes('public')) {
+          // Get the data
+          const entity = await model.findOne(filters)
+    
+          // Return error if not found
+          if (!entity) { throw new Error(`Unable to find a ${prefix} with the provided id`, 404) }
+
+          return entity
+        }
+        
         // Check if the user is allowed to see the entity
         if (!permissions.includes(`read_all_${prefix}s`)) {
           filters.createdBy = user._id
@@ -101,9 +112,16 @@ function createCRUDResolver<T extends ClassType>({
     @Authorized({ permissions: readAll })
     readAll (
       @Args() { perPage, page, filters = [], sort = [] }: paginationInterface,
-      @Ctx() { permissions, user }: any
+      @Ctx() { permissions = [], user }: any
     ): paginationOutput {
       try {
+        // Check if endpoint is public
+        if (readAll.includes('public')) {
+          // No need to check permissions endpoint is public
+          return model.paginate(filters, { page, perPage, sort })
+        }
+
+        // If endpoint is not public
         // Check if the user is allowed to see the entity
         if (!permissions.includes(`read_all_${prefix}s`)) {
           // Add filtering to the DB request

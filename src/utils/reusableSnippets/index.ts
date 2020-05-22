@@ -22,12 +22,31 @@ export const createFilters = (model: Model<any, {}>, resolverName: string) => {
   const indexes = Object.entries(modelData.paths).reduce((x: any, u: any) => {
     const { options } = u[1]
 
+    // Check if the text index is present
     if (options.text) {
+      // If so add it to the Filters
       x.textIndexes.types[u[0].toUpperCase()] = u[1].instance.toLowerCase()
       x.textIndexes.enum[u[0].toUpperCase()] = u[0]
     }
+    // Check if the index is true
     if (options.index) {
+      // If so add it to the sorting
       x.regularIndexes[u[0].toUpperCase()] = u[0]
+    }
+
+    // Check if the type of the property is array
+    if (Array.isArray(options.type)) {
+      // If its array then check for the indexes inside the array
+      if (options.type[0].text) {
+        // If so add it to the Filters
+        x.textIndexes.types[u[0].toUpperCase()] = 'objectid'
+        x.textIndexes.enum[u[0].toUpperCase()] = u[0]
+      }
+      // Check if the index is true
+      if (options.type[0].index) {
+        // If so add it to the sorting
+        x.regularIndexes[u[0].toUpperCase()] = u[0]
+      }
     }
     return x
   }, {
@@ -42,7 +61,7 @@ export const createFilters = (model: Model<any, {}>, resolverName: string) => {
   if (Object.keys(indexes.regularIndexes).length) {
     registerEnumType(indexes.regularIndexes, { name: `${resolverName}SortType` })
   }
-
+  
   return indexes
 }
 

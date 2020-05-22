@@ -1,6 +1,4 @@
 import { InputType, Field, EnumResolver, registerEnumType } from "type-graphql";
-import { IsDate } from "class-validator";
-import { IsBefore } from "../../../utils/customValidators/validators";
 import { StringOrArrayOfStrings } from "../../../utils/reusableSnippets/customScalars";
 
 enum direction {
@@ -18,6 +16,9 @@ const createUsableEnums = (filterCriterias: any) => {
         break
       case 'string':
         x.string = { ...x.string, [u[0]]: filterCriterias.enum[u[0]] }
+        break
+      case 'number':
+        x.number = { ...x.number, [u[0]]: filterCriterias.enum[u[0]] }
         break
       case 'boolean':
         x.boolean = { ...x.boolean, [u[0]]: filterCriterias.enum[u[0]] }
@@ -75,17 +76,47 @@ function buildDateInterfaces (usableEnum: any, prefix: string) {
       @Field(() => validEnum, { nullable: false })
       field: EnumResolver
     
-      @Field(() => Date, { nullable: false })
-      @IsDate({ message: "The provided date is invalid" })
-      @IsBefore({ message: "The parameter FROM must contain a date prior to the one in the parameter TO" })
+      @Field(() => Date, { nullable: true })
       from: Date
   
-      @Field(() => Date, { nullable: false })
-      @IsDate({ message: "The provided date is invalid" })
+      @Field(() => Date, { nullable: true })
       to: Date
     }
 
     return [byDate]
+  } 
+  
+  return validEnum
+}
+
+function buildNumberInterface (usableEnum: any, prefix: string) {
+  // Register the enum
+  const validEnum = Boolean(usableEnum) ? usableEnum : { NOT_ALLOWED: 'NOT_ALLOWED' }
+  registerEnumType(validEnum, { name: `${prefix}sByNumberEnum` })
+
+  if (Boolean(usableEnum)) {
+    @InputType(`${prefix}ByNumberFilter`)
+    class byNum {
+      @Field(() => validEnum, { nullable: false })
+      field: EnumResolver
+    
+      @Field(() => Number, { nullable: true })
+      equalTo: Number
+  
+      @Field(() => Number, { nullable: true })
+      greaterThan: Number
+        
+      @Field(() => Number, { nullable: true })
+      greaterOrEqualThan: Number
+        
+      @Field(() => Number, { nullable: true })
+      lowerThan: Number
+        
+      @Field(() => Number, { nullable: true })
+      lowerOrEqualThan: Number
+    }
+
+    return [byNum]
   } 
   
   return validEnum
@@ -101,6 +132,7 @@ export function createDynamicFilterType (
   const idEnums = buildRegularInterfaces(usableEnums.id, prefix, 'Id')
   const booleanEnums = buildRegularInterfaces(usableEnums.boolean, prefix, 'Condition')
   const stringEnums = buildRegularInterfaces(usableEnums.string, prefix, 'Text')
+  const numberEnums = buildNumberInterface(usableEnums.number, prefix)
   const dateEnums = buildDateInterfaces(usableEnums.date, prefix)
 
   // Create full Filter
@@ -114,6 +146,9 @@ export function createDynamicFilterType (
 
     @Field(() => stringEnums, { nullable: true })
     byText: any
+
+    @Field(() => numberEnums, { nullable: true })
+    byNumber: any
 
     @Field(() => dateEnums, { nullable: true })
     byDate: any

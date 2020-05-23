@@ -127,7 +127,7 @@ async function paginate (this: any,
     query = {}
   }
 
-  console.log(query)
+  // console.log(query)
 
   // Parse the sort coming from the sort param
   const parsedSort = JSON.parse(JSON.stringify(sort))

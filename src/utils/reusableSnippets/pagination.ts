@@ -3,8 +3,6 @@ import { isMongoId } from '.'
 import Error from '../../middlewares/errorHandler'
 import moment from 'moment'
 
-// TODO: Handle the Date Instance
-
 interface paginateOutput {
   docs: any[]
   total: number
@@ -37,12 +35,14 @@ async function paginate (this: any,
   // Get the schema paths of the model
   const paths = this.schema.paths
 
-  if (parsedQuery[0]) {
-    // Filter unallowed keys
-    parsedQuery = Object
-      .values(parsedQuery[0])
-      .filter((u: any) => typeof u !== 'string')
-      .reduce((x: any, u:any) => { x.push(u[0]); return x }, [])
+  if (parsedQuery.length) {
+    // parse the query to mongo specs
+    parsedQuery = parsedQuery.reduce((x: any, u: any) => {
+      const param = Object.values(u)
+        .map((u:any) => u[0])
+      x = [...x, ...param]
+      return x
+    }, [])
   }
 
   if (query.length) {
@@ -61,7 +61,14 @@ async function paginate (this: any,
           x[u.field] = mongoose.Types.ObjectId(u.value)
         }
       } else if (paths[u.field]['instance'] === 'String') {
-        x[u.field] = new RegExp(`${u.value}`, 'i')
+        // Check if the OR value was sent
+        if (u.or) {
+          // If so return or statement
+          x['$or'] = [{ [u.field]: new RegExp(`${u.value}`, 'i') }, { [u.or]: new RegExp(`${u.value}`, 'i') }] 
+        } else {
+          // If not return normal statement
+          x[u.field] = new RegExp(`${u.value}`, 'i')
+        }
       } else if (paths[u.field]['instance'] === 'Date') {
         // Convert the dates to moment objects
         const from = u.from === undefined ? undefined : moment(u.from)
@@ -126,9 +133,7 @@ async function paginate (this: any,
   } else {
     query = {}
   }
-
-  // console.log(query)
-
+  
   // Parse the sort coming from the sort param
   const parsedSort = JSON.parse(JSON.stringify(sort))
 

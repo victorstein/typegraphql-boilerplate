@@ -39,10 +39,8 @@ function buildRegularInterfaces(usableEnum: any, prefix: string, by: string) {
     switch (by) {
       case 'Condition':
         return Boolean
-      case 'Id':
-        return StringOrArrayOfStrings
       default:
-        return String
+        return StringOrArrayOfStrings
     }
   }  
 
@@ -63,6 +61,31 @@ function buildRegularInterfaces(usableEnum: any, prefix: string, by: string) {
   }
   
   return validEnum
+}
+
+function buildStringInterface (usableEnum: any, prefix: string) {
+  // Register the enum
+  const validEnum = Boolean(usableEnum) ? usableEnum : { NOT_ALLOWED: 'NOT_ALLOWED' }
+  registerEnumType(validEnum, { name: `${prefix}ByTextEnum` })
+
+  if (Boolean(usableEnum)) {
+    @InputType(`${prefix}ByTextFilter`)
+    class byText {
+      @Field(() => validEnum, { nullable: false })
+      field: EnumResolver
+    
+      @Field(() => String, { nullable: false })
+      value: string
+      
+      @Field(() => validEnum, { nullable: true })
+      or: EnumResolver
+    }
+
+    return [byText]
+  } 
+  
+  return validEnum
+  
 }
 
 function buildDateInterfaces (usableEnum: any, prefix: string) {
@@ -131,7 +154,7 @@ export function createDynamicFilterType (
   // Create enums and corresponding types
   const idEnums = buildRegularInterfaces(usableEnums.id, prefix, 'Id')
   const booleanEnums = buildRegularInterfaces(usableEnums.boolean, prefix, 'Condition')
-  const stringEnums = buildRegularInterfaces(usableEnums.string, prefix, 'Text')
+  const stringEnums = buildStringInterface(usableEnums.string, prefix)
   const numberEnums = buildNumberInterface(usableEnums.number, prefix)
   const dateEnums = buildDateInterfaces(usableEnums.date, prefix)
 

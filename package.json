@@ -32,7 +32,7 @@
   "homepage": "https://github.com/victorstein/gql-forge#readme",
   "dependencies": {
     "@typegoose/typegoose": "^6.1.8",
-    "apollo-server-express": "^2.9.14",
+    "apollo-server-express": "^2.14.2",
     "bcryptjs": "^2.4.3",
     "class-validator": "^0.11.0",
     "dotenv": "^8.2.0",

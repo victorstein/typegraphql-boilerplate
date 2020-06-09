@@ -25,7 +25,7 @@ REFRESH_TOKEN_SECRET_EXPIRATION = string (1d)
 DB_USER = string (mongodb user)
 DB_PASS = string (mongodb pass)
 DB_URI = string (@test.mongodb.net/test?retryWrites=forge&w=majority)
-EMAIL_PROVIDER_HOST = string (smtp.gamil.com)
+EMAIL_PROVIDER_HOST = string (smtp.gmail.com)
 EMAIL_PROVIDER_TLS_PORT = int (587)
 EMAIL_PROVIDER_SSL_PORT = int (465)
 EMAIL_PROVIDER_USER = string (smtp user)
@@ -40,8 +40,6 @@ QUERY_COMPLEXITY = int (25)
 ```
 
 * Finally, just run ```npm run dev``` for development, or ```npm run build``` for webpack, or ```npm start``` (once built) to run production
-
-* I you want to quickly run the API for development (no type checking) you may user the command ```npm run fast-dev```
 
 ## Contributing
 

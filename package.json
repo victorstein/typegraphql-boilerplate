@@ -4,10 +4,9 @@
   "description": "Just another graphql cms",
   "main": "dist/server.bundle.js",
   "scripts": {
-    "dev": "nodemon --exec ts-node src/server.ts",
-    "fast-dev": "nodemon --exec ts-node --files --transpile-only src/server.ts",
+    "dev": "webpack --watch | nodemon --exec node dist/server.bundle.js",
     "build": "webpack",
-    "start": "node dist/server.bundle.js"
+    "start": "pm2 start dist/server.bundle.js --name graphql-forge"
   },
   "repository": {
     "type": "git",
@@ -47,6 +46,7 @@
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.24.0",
     "mongoose": "^5.9.12",
+    "pm2": "^4.4.0",
     "nodemailer": "^6.4.2",
     "reflect-metadata": "^0.1.13",
     "request-context": "^2.0.0",

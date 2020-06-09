@@ -13,6 +13,8 @@ import { cyan, red, gray } from 'chalk'
 import queryComplexityEvaluator from './utils/queryComplexityValidator/queryComplexity'
 import Error from './middlewares/errorHandler'
 import cors from 'cors'
+import notFound from './middlewares/notFound'
+import path from 'path'
 
 // Context service
 const contextService = require('request-context')
@@ -33,6 +35,9 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI, ALLOWED_ORIGINS } = process.en
 
     // Add context service middleware
     app.use(contextService.middleware('req'));
+
+    // Serve the media folder
+    app.use('/public',express.static(path.join(__dirname, '..', 'public', 'media')))
 
     // Create Schema
     const schema = await buildSchema({
@@ -99,6 +104,9 @@ const { PORT, NODE_ENV, DB_USER, DB_PASS, DB_URI, ALLOWED_ORIGINS } = process.en
 
     // Create middleware
     server.applyMiddleware({ app })
+
+    // Handle 404
+    app.use(notFound)
 
     // listen to port
     app.listen(PORT, () => console.log(cyan(`Server running on http://localhost:${PORT}/graphql`)))

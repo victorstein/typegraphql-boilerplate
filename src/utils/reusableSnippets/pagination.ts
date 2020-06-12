@@ -120,20 +120,33 @@ async function paginate (this: any,
         if (u.lowerOrEqualThan !== undefined) { filter = { ...filter, $lte: u.lowerOrEqualThan } }
 
         x[u.field] = filter
-      } else {
-        // Check if the param is an array
+      } else if (paths[u.field]['instance'] === 'Array') {
         if (Array.isArray(u.value)) {
-          x[u.field] = { $in: u.value.map((u: any) => u.value) }
+          // Check if all the Ids are valid mongoIds
+          if (!u.value.every((u:any) => u.value ? isMongoId(u.value) : isMongoId(u))) {
+            throw new Error('One or more of the provided Ids is Invalid', 400)
+          }
+          x[u.field] = {
+            $in: u.value.map((u: any) =>
+              u.value
+                ? mongoose.Types.ObjectId(u.value)
+                : mongoose.Types.ObjectId(u)
+            )
+          }
         } else {
-          x[u.field] = u.value
+          // Check if the id is a valid mongoId
+          if (!isMongoId(u.value)) { throw new Error('The provided Id is Invalid', 400) }
+          x[u.field] = mongoose.Types.ObjectId(u.value)
         }
+      } else {
+        x[u.field] = u.value
       }
       return x
     }, {})
   } else {
     query = {}
   }
-  
+
   // Parse the sort coming from the sort param
   const parsedSort = JSON.parse(JSON.stringify(sort))
 
